@@ -1,15 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title><![CDATA[2019-04-12-测试文章]]></title>
-    <url>%2F2019%2F04%2F12%2Ftest-page%2F</url>
-    <content type="text"><![CDATA[这里是文章的概览，显示在主页缩略内容上面 这里是自动生成的文章目录 hia hia hia 第一个页面哟 这是大标题这是二级标题这里有个本地图片 这里有个网络图片 文章结束 作者：jinnew]]></content>
-      <tags>
-        <tag>测试</tag>
-        <tag>前端</tag>
-      </tags>
-  </entry>
-  <entry>
     <title><![CDATA[欢迎来到无名空间站]]></title>
     <url>%2F2019%2F04%2F12%2Fwelcome-page%2F</url>
     <content type="text"><![CDATA[入站须知 女士们、先生们： 本次旅程开往混沌星球，进入空间站后请您对号入座,并将零食放在身边,不要让它离开您的视线,找个舒适的姿势尽快入座,入座后请系好安全带。 我是站长Jinnew，祝大家本次旅程玩的愉快]]></content>
