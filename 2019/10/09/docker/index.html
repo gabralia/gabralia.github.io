@@ -13,7 +13,7 @@
     
         <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
     
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Jinnew","sameAs":["https://github.com/gabralia","/#about"],"image":"header.jpg"},"articleBody":"docker / docker-compose 相关概念及常用命令\n\nDocker\n- 基本概念Docker是一种容器，操作系统级别的轻量级虚拟化，可以把环境一起打包扔给各服务器，随时随地都能运行。（保证运行环境一致）\nDocker镜像（image）：相当于root文件系统，内核启动后为其提供用户空间支持。除了提供容器运行时所需的程序、库、资源、配置等文件外，还包含了一些为运行时准备的配置参数（如匿名卷、环境变量、用户等）。镜像不包含任何动态数据，其内容在构建之后也不会被改变。\nDocker容器（container）：实质是进程，镜像（Image）和容器（Container）的关系，就像是面向对象程序设计中的 类 和 实例 一样，image是container的静态定义（可类比 hello_world.py文件 和 对应的hello_world进程），容器是镜像运行时的实体。容器可以被创建、启动、停止、删除、暂停等。\nDocker Register：镜像构建完成后，如果需要在其它服务器上使用，那么就需要一个集中的存储、分发镜像的服务一个Docker Registry中可以包含多个仓库（Repository）；每个仓库可以包含多个标签（Tag）；每个标签对应一个镜像通过 &lt;仓库名&gt;:&lt;标签&gt; 的格式来指定具体是这个软件哪个版本的镜像\n- 常用命令1. 镜像\n 获取镜像：docker pull [选项] [Docker Registry 地址 [:端口号] /] 仓库名 [:标签]\n&gt; Docker 镜像仓库地址：地址的格式一般是 &lt;域名/IP&gt;[:端口号]。默认地址是 Docker Hub。\n\n&gt; 仓库名： &lt;用户名&gt;/&lt;软件名&gt;。对于 Docker Hub，如果不给出用户名，则默认为 library，也就是官方镜像。\n列出镜像：docker image ls\n查看中间层镜像：docker image ls -a\n\n列出部分镜像：\n\n       根据仓库名列出镜像：docker image ls ubuntu\n\n       指定仓库名和标签：docker image ls ubuntu:18.04\n\n       过滤器参数（--filter）：docker image ls -f since=mongo:3.2 （mongo:3.2之后的镜像）\n\n       以特定格式显示（-q/--format）：docker image ls --format &quot;{{.ID}} : {{.Repository}}&quot;\n删除虚悬镜像：docker image prune\n删除本地镜像：docker image rm [选项] &lt;镜像1&gt; [&lt;镜像2&gt; …]\n配合 ls使用：docker image rm $(docker image ls -q redis)    （删除所有仓库名为redis的镜像）\n\ndocker image rm $(docker image ls -q -f before=mongo:3.2)。（删除所有在mongo:3.2之前的镜像）\n运行容器时修改了文件，保存成最终镜像：docker commit [选项]&lt;容器ID或容器名&gt;[&lt;仓库名&gt;[:&lt;标签&gt;]]   （慎用，黑箱镜像）\neg：docker commit --author &quot;Tao Wang &lt;[twang2218@gmail.com](mailto:twang2218@gmail.com)&gt;&quot; --message &quot;修改了默认网页&quot; webserver nginx:v2\n定制镜像：Dockerfile\n一个文本文件，其内包含了一条条的 **指令(Instruction)**，每一条指令构建一层，因此每一条指令的内容，就是描述该层应当如何构建。\n\n From指定基础镜像，Run 执行命令\n\n 构建镜像：docker build [选项] &lt;上下文路径/URL/-&gt;\n2. 容器\n新建并启动：docker run\n启动已终止容器：docker container start [container ID or NAMES]\n后台运行(-d): docker run -d ubuntu:18.04 /bin/sh -c “while true; do echo hello world; sleep 1; done”\n查看容器信息：docker container ls\n 获取容器的输出信息：docker container logs [container ID or NAMES]\n终止容器：docker container stop [container ID or NAMES]\n重启运行中的容器：docker container restart [container ID or NAMES]\n进入容器：docker attach [container ID or NAMES]  (从 stdin 中 exit，会导致容器停止)\ndocker exec -it [container ID or NAMES] bash (从 stdin 中 exit，不会导致容器停止，推荐)\n\n&gt; -I: interactive, keep stdin -iopen\n\n&gt; -t: 分配伪终端\n导出容器：docker export [container ID] &gt; ubuntu.tar\n导入容器：cat ubuntu.tar | docker import - test/ubuntu:v1.0\n删除容器：docker container rm [container ID or NAMES] （运行中的容器可使用-f参数）\n清理所有处于终止状态的容器：docker container prune\n3. 仓库\n查找官方仓库中的镜像：docker search\n推送镜像到 Docker Hub：docker push\n4. 数据管理\n数据卷\n创建：docker volume create my-vol\n\n查看：docker volume ls\n\n启动一个挂载数据卷的容器（--mount）：docker run -d -P \\\n\n                                 --name web \\\n\n                                 --mount source=my-vol,target=/webapp \\\n\n                                 training/webapp \\\n\n                                 python [app.py](http://app.py/)\n\n（创建一个名为 web 的容器，并加载一个 数据卷 到容器的 /webapp 目录。）\n\n 查看数据卷的具体信息：docker inspect web\n\n 删除数据卷：docker volume rm my-vol\n5. 使用网络\n外部访问容器（-P/-p）：docker run -d -P training/webapp python app.py                       (使用-P标记时，Docker 会随机映射一个49000~49900的端口到内部容器开放的网络端口)\ndocker run -d -p 5000:5000 training/webapp python [app.py](http://app.py/) (本地的5000 端口映射到容器的5000 端口)\n\n127.0.0.1:5000:5000  指定地址到指定端口 / 127.0.0.1::5000 指定地址的任意端口 / 127.0.0.1:5000:5000/udp 指定 udp 端口\n\n-p可以多次使用来绑定多个端口\n查看映射端口配置：docker port nostalgic_morse 5000\n 新建网络：docker network create -d bridge my-net\n&gt; -d 参数指定 Docker 网络类型，有 bridge overlay\n连接容器：docker run -it –rm –name busybox1 –network my-net busybox sh （运行一个容器并连接到新建的 my-net 网络）\ndocker run -it --rm --name busybox2 --network my-net busybox sh （再运行一个容器并加入到 my-net 网络）\n\n&gt; busybox1 与 busybox2 可相互ping通\nExample :\n1.安装Ubuntu：docker pull ubuntu\n2.run container : docker run -tid –name ubuntu -p 23:22 ubuntu：将新建的docker命名为ubuntu并映射到23端口\n3.查看23号端口是否开启：netstat -apnl | grep 23（linux） /  netstat -AaLlnW ｜grep 23（mac）/  lsof -i:23 (mac)\n4.进入container：docker exec -ti ubuntu /bin/bash  \n5.修改root密码：passwd\n6.更新vim：apt install -y vim （也许需要apt update）\n7.安装openssh-server：  apt install -y openssh-server\n8.修改配置，可使用root登录：vim /etc/ssh/sshd_config ，添加PermitRootLogin yes ；添加UsePAM no\n9.启动ssh：service ssh start\n10.重新进入docker container：ssh root@ip -p 23\n\n\nDocker-compose\n- 基本概念定义和运行多个 Docker 容器的应用，允许用户通过一个单独的 docker-compose.yml 模板文件（YAML 格式）来定义一组相关联的应用容器为一个项目\n&gt; 服务 (service)：一个应用容器，实际上可以运行多个相同镜像的实例。\n\n&gt; 项目 (project)：由一组关联的应用容器组成的一个完整业务单元。\ndocker-compose [-f=…] [options] [COMMAND] [ARGS…]\n\n\nVM\n传统虚拟机技术是虚拟出一套硬件后，在其上运行一个完整操作系统，在该系统上再运行所需应用进程；\n而容器内的应用进程直接运行于宿主的内核，容器内没有自己的内核，而且也没有进行硬件虚拟。因此容器要比传统虚拟机更为轻便。\n\n","dateCreated":"2019-10-09T23:07:19+08:00","dateModified":"2019-10-10T01:14:40+08:00","datePublished":"2019-10-09T23:07:19+08:00","description":"docker / docker-compose 相关概念及常用命令","headline":"docker 基本概念与常用命令","image":["thumb.jpg","cover.png"],"mainEntityOfPage":{"@type":"WebPage","@id":"/2019/10/09/docker/"},"publisher":{"@type":"Organization","name":"Jinnew","sameAs":["https://github.com/gabralia","/#about"],"image":"header.jpg","logo":{"@type":"ImageObject","url":"header.jpg"}},"url":"/2019/10/09/docker/","keywords":"技术","thumbnailUrl":"thumb.jpg"}</script>
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Jinnew","sameAs":["https://github.com/gabralia","/#about"],"image":"header.jpg"},"articleBody":"docker / docker-compose 相关概念及常用命令\n\nDocker\n- 基本概念Docker是一种容器，操作系统级别的轻量级虚拟化，可以把环境一起打包扔给各服务器，随时随地都能运行。（保证运行环境一致）\nDocker镜像（image）：相当于root文件系统，内核启动后为其提供用户空间支持。除了提供容器运行时所需的程序、库、资源、配置等文件外，还包含了一些为运行时准备的配置参数（如匿名卷、环境变量、用户等）。镜像不包含任何动态数据，其内容在构建之后也不会被改变。\nDocker容器（container）：实质是进程，镜像（Image）和容器（Container）的关系，就像是面向对象程序设计中的 类 和 实例 一样，image是container的静态定义（可类比 hello_world.py文件 和 对应的hello_world进程），容器是镜像运行时的实体。容器可以被创建、启动、停止、删除、暂停等。\nDocker Register：镜像构建完成后，如果需要在其它服务器上使用，那么就需要一个集中的存储、分发镜像的服务一个Docker Registry中可以包含多个仓库（Repository）；每个仓库可以包含多个标签（Tag）；每个标签对应一个镜像通过 &lt;仓库名&gt;:&lt;标签&gt; 的格式来指定具体是这个软件哪个版本的镜像\n- 常用命令1. 镜像\n 获取镜像：docker pull [选项] [Docker Registry 地址 [:端口号] /] 仓库名 [:标签]\n&gt; Docker 镜像仓库地址：地址的格式一般是 &lt;域名/IP&gt;[:端口号]。默认地址是 Docker Hub。\n\n&gt; 仓库名： &lt;用户名&gt;/&lt;软件名&gt;。对于 Docker Hub，如果不给出用户名，则默认为 library，也就是官方镜像。\n列出镜像：docker image ls\n查看中间层镜像：docker image ls -a\n\n列出部分镜像：\n\n       根据仓库名列出镜像：docker image ls ubuntu\n\n       指定仓库名和标签：docker image ls ubuntu:18.04\n\n       过滤器参数（--filter）：docker image ls -f since=mongo:3.2 （mongo:3.2之后的镜像）\n\n       以特定格式显示（-q/--format）：docker image ls --format &quot;{{.ID}} : {{.Repository}}&quot;\n删除虚悬镜像：docker image prune\n删除本地镜像：docker image rm [选项] &lt;镜像1&gt; [&lt;镜像2&gt; …]\n配合 ls使用：docker image rm $(docker image ls -q redis)    （删除所有仓库名为redis的镜像）\n\ndocker image rm $(docker image ls -q -f before=mongo:3.2)。（删除所有在mongo:3.2之前的镜像）\n运行容器时修改了文件，保存成最终镜像：docker commit [选项]&lt;容器ID或容器名&gt;[&lt;仓库名&gt;[:&lt;标签&gt;]]   （慎用，黑箱镜像）\neg：docker commit --author &quot;Tao Wang &lt;[twang2218@gmail.com](mailto:twang2218@gmail.com)&gt;&quot; --message &quot;修改了默认网页&quot; webserver nginx:v2\n定制镜像：Dockerfile\n一个文本文件，其内包含了一条条的指令(Instruction)，每一条指令构建一层，因此每一条指令的内容，就是描述该层应当如何构建。\n\n From指定基础镜像，Run 执行命令\n\n 构建镜像：docker build [选项] &lt;上下文路径/URL/-&gt;\n2. 容器\n新建并启动：docker run\n启动已终止容器：docker container start [container ID or NAMES]\n后台运行(-d):docker run -d ubuntu:18.04 /bin/sh -c “while true; do echo hello world; sleep 1; done”\n查看容器信息：docker container ls\n 获取容器的输出信息：docker container logs [container ID or NAMES]\n终止容器：docker container stop [container ID or NAMES]\n重启运行中的容器：docker container restart [container ID or NAMES]\n进入容器：docker attach [container ID or NAMES]  (从 stdin 中 exit，会导致容器停止)\ndocker exec -it [container ID or NAMES] bash (从 stdin 中 exit，不会导致容器停止，推荐)\n\n&gt; -I: interactive, keep stdin -iopen\n\n&gt; -t: 分配伪终端\n导出容器：docker export [container ID] &gt; ubuntu.tar\n导入容器：cat ubuntu.tar | docker import - test/ubuntu:v1.0\n删除容器：docker container rm [container ID or NAMES] （运行中的容器可使用-f参数）\n清理所有处于终止状态的容器：docker container prune\n3. 仓库\n查找官方仓库中的镜像：docker search\n推送镜像到 Docker Hub：docker push\n4. 数据管理\n数据卷\n创建：docker volume create my-vol\n\n查看：docker volume ls\n\n启动一个挂载数据卷的容器（--mount）：docker run -d -P \\\n\n                                 --name web \\\n\n                                 --mount source=my-vol,target=/webapp \\\n\n                                 training/webapp \\\n\n                                 python [app.py](http://app.py/)\n\n（创建一个名为 web 的容器，并加载一个 数据卷 到容器的 /webapp 目录。）\n\n 查看数据卷的具体信息：docker inspect web\n\n 删除数据卷：docker volume rm my-vol\n5. 使用网络\n外部访问容器（-P/-p）：docker run -d -P training/webapp python app.py                       (使用-P标记时，Docker 会随机映射一个49000~49900的端口到内部容器开放的网络端口)\ndocker run -d -p 5000:5000 training/webapp python [app.py](http://app.py/) (本地的5000 端口映射到容器的5000 端口)\n\n127.0.0.1:5000:5000  指定地址到指定端口 / 127.0.0.1::5000 指定地址的任意端口 / 127.0.0.1:5000:5000/udp 指定 udp 端口\n\n-p可以多次使用来绑定多个端口\n查看映射端口配置：docker port nostalgic_morse 5000\n 新建网络：docker network create -d bridge my-net\n&gt; -d 参数指定 Docker 网络类型，有 bridge overlay\n连接容器：\ndocker run -it --rm --name busybox1 --network my-net busybox sh （运行一个容器并连接到新建的 my-net 网络）\n\ndocker run -it --rm --name busybox2 --network my-net busybox sh （再运行一个容器并加入到 my-net 网络）\n\n&gt; busybox1 与 busybox2 可相互ping通\nExample :\n1.安装Ubuntu：docker pull ubuntu\n2.run container : docker run -tid –name ubuntu -p 23:22 ubuntu：将新建的docker命名为ubuntu并映射到23端口\n3.查看23号端口是否开启：netstat -apnl | grep 23（linux） /  netstat -AaLlnW ｜grep 23（mac）/  lsof -i:23 (mac)\n4.进入container：docker exec -ti ubuntu /bin/bash  \n5.修改root密码：passwd\n6.更新vim：apt install -y vim （也许需要apt update）\n7.安装openssh-server：  apt install -y openssh-server\n8.修改配置，可使用root登录：vim /etc/ssh/sshd_config ，添加PermitRootLogin yes ；添加UsePAM no\n9.启动ssh：service ssh start\n10.重新进入docker container：ssh root@ip -p 23\n\n\nDocker-compose\n- 基本概念定义和运行多个 Docker 容器的应用，允许用户通过一个单独的 docker-compose.yml 模板文件（YAML 格式）来定义一组相关联的应用容器为一个项目\n&gt; 服务 (service)：一个应用容器，实际上可以运行多个相同镜像的实例。\n\n&gt; 项目 (project)：由一组关联的应用容器组成的一个完整业务单元。\ndocker-compose [-f=…] [options] [COMMAND] [ARGS…]\n\n\nVM\n传统虚拟机技术是虚拟出一套硬件后，在其上运行一个完整操作系统，在该系统上再运行所需应用进程；\n而容器内的应用进程直接运行于宿主的内核，容器内没有自己的内核，而且也没有进行硬件虚拟。因此容器要比传统虚拟机更为轻便。\n\n","dateCreated":"2019-10-09T23:07:19+08:00","dateModified":"2019-10-10T01:51:52+08:00","datePublished":"2019-10-09T23:07:19+08:00","description":"docker / docker-compose 相关概念及常用命令","headline":"docker 基本概念与常用命令","image":["thumb.jpg","cover.png"],"mainEntityOfPage":{"@type":"WebPage","@id":"/2019/10/09/docker/"},"publisher":{"@type":"Organization","name":"Jinnew","sameAs":["https://github.com/gabralia","/#about"],"image":"header.jpg","logo":{"@type":"ImageObject","url":"header.jpg"}},"url":"/2019/10/09/docker/","keywords":"技术","thumbnailUrl":"thumb.jpg"}</script>
     <meta name="description" content="docker / docker-compose 相关概念及常用命令">
 <meta name="keywords" content="技术">
 <meta property="og:type" content="blog">
@@ -24,7 +24,7 @@
 <meta property="og:locale" content="zh-cn">
 <meta property="og:image" content="/09/docker/docker.png">
 <meta property="og:image" content="/09/docker/virtualization.png">
-<meta property="og:updated_time" content="2019-10-09T17:14:40.555Z">
+<meta property="og:updated_time" content="2019-10-09T17:51:52.426Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="docker 基本概念与常用命令">
 <meta name="twitter:description" content="docker / docker-compose 相关概念及常用命令">
@@ -71,10 +71,11 @@
     </div>
     
         
-            <a class="header-right-picture " href="#about">
+            <a  class="header-right-picture "
+                href="#about">
         
         
-            <img class="header-picture" src="/assets/images/header.jpg" alt="作者的图片">
+            <img class="header-picture" src="/assets/images/header.jpg" alt="作者的图片"/>
         
         </a>
     
@@ -92,7 +93,7 @@
         
             <div class="sidebar-profile">
                 <a href="/#about">
-                    <img class="sidebar-profile-picture" src="/assets/images/header.jpg" alt="作者的图片">
+                    <img class="sidebar-profile-picture" src="/assets/images/header.jpg" alt="作者的图片"/>
                 </a>
                 <h4 class="sidebar-profile-name">Jinnew</h4>
                 
@@ -106,7 +107,11 @@
             
                 <li class="sidebar-button">
                     
-                        <a class="sidebar-button-link " href="/ " title="首页">
+                        <a  class="sidebar-button-link "
+                             href="/ "
+                            
+                            title="首页"
+                        >
                     
                         <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
                         <span class="sidebar-button-desc">首页</span>
@@ -115,7 +120,11 @@
             
                 <li class="sidebar-button">
                     
-                        <a class="sidebar-button-link " href="/all-categories" title="分类">
+                        <a  class="sidebar-button-link "
+                             href="/all-categories"
+                            
+                            title="分类"
+                        >
                     
                         <i class="sidebar-button-icon fa fa-bookmark" aria-hidden="true"></i>
                         <span class="sidebar-button-desc">分类</span>
@@ -124,7 +133,11 @@
             
                 <li class="sidebar-button">
                     
-                        <a class="sidebar-button-link " href="/all-tags" title="标签">
+                        <a  class="sidebar-button-link "
+                             href="/all-tags"
+                            
+                            title="标签"
+                        >
                     
                         <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
                         <span class="sidebar-button-desc">标签</span>
@@ -133,7 +146,11 @@
             
                 <li class="sidebar-button">
                     
-                        <a class="sidebar-button-link " href="/all-archives" title="归档">
+                        <a  class="sidebar-button-link "
+                             href="/all-archives"
+                            
+                            title="归档"
+                        >
                     
                         <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
                         <span class="sidebar-button-desc">归档</span>
@@ -142,7 +159,11 @@
             
                 <li class="sidebar-button">
                     
-                        <a class="sidebar-button-link open-algolia-search" href="#search" title="搜索">
+                        <a  class="sidebar-button-link open-algolia-search"
+                             href="#search"
+                            
+                            title="搜索"
+                        >
                     
                         <i class="sidebar-button-icon fa fa-search" aria-hidden="true"></i>
                         <span class="sidebar-button-desc">搜索</span>
@@ -155,7 +176,10 @@
             
                 <li class="sidebar-button">
                     
-                        <a class="sidebar-button-link " href="https://github.com/gabralia" title="GitHub">
+                        <a  class="sidebar-button-link "
+                             href="https://github.com/gabralia"
+                            title="GitHub"
+                        >
                     
                         <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
                         <span class="sidebar-button-desc">GitHub</span>
@@ -164,7 +188,11 @@
             
                 <li class="sidebar-button">
                     
-                        <a class="sidebar-button-link " href="#about" title="关于">
+                        <a  class="sidebar-button-link "
+                             href="#about"
+                            
+                            title="关于"
+                        >
                     
                         <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
                         <span class="sidebar-button-desc">关于</span>
@@ -177,7 +205,11 @@
             
                 <li class="sidebar-button">
                     
-                        <a class="sidebar-button-link " href="/atom.xml" title="RSS">
+                        <a  class="sidebar-button-link "
+                             href="/atom.xml"
+                            
+                            title="RSS"
+                        >
                     
                         <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
                         <span class="sidebar-button-desc">RSS</span>
@@ -192,7 +224,9 @@
             
         <div class="post-header-cover
                     text-center
-                    post-header-cover--partial" style="background-image:url('/2019/10/09/docker/cover.png');" data-behavior="4">
+                    post-header-cover--partial"
+             style="background-image:url('/2019/10/09/docker/cover.png');"
+             data-behavior="4">
             
                 <div class="post-header main-content-wrap text-center">
     
@@ -245,10 +279,10 @@
 <pre><code>配合 ls使用：docker image rm $(docker image ls -q redis)    （删除所有仓库名为redis的镜像）
 
 docker image rm $(docker image ls -q -f before=mongo:3.2)。（删除所有在mongo:3.2之前的镜像）
-</code></pre><p><5>运行容器时修改了文件，保存成最终镜像：docker commit [选项]&lt;容器ID或容器名&gt;[&lt;仓库名&gt;[:&lt;标签&gt;]]   （慎用，黑箱镜像）</5></p>
+</code></pre><p><5>运行容器时修改了文件，保存成最终镜像：<br>docker commit [选项]&lt;容器ID或容器名&gt;[&lt;仓库名&gt;[:&lt;标签&gt;]]   （慎用，黑箱镜像）</5></p>
 <pre><code>eg：docker commit --author &quot;Tao Wang &lt;[twang2218@gmail.com](mailto:twang2218@gmail.com)&gt;&quot; --message &quot;修改了默认网页&quot; webserver nginx:v2
 </code></pre><p><6>定制镜像：Dockerfile</6></p>
-<pre><code>一个文本文件，其内包含了一条条的 **指令(Instruction)**，每一条指令构建一层，因此每一条指令的内容，就是描述该层应当如何构建。
+<pre><code>一个文本文件，其内包含了一条条的指令(Instruction)，每一条指令构建一层，因此每一条指令的内容，就是描述该层应当如何构建。
 
  From指定基础镜像，Run 执行命令
 
@@ -256,7 +290,7 @@ docker image rm $(docker image ls -q -f before=mongo:3.2)。（删除所有在mo
 </code></pre><p><strong>2. 容器</strong></p>
 <p><1>新建并启动：docker run</1></p>
 <p><2>启动已终止容器：docker container start [container ID or NAMES]</2></p>
-<p><3>后台运行(-d): docker run -d ubuntu:18.04 /bin/sh -c “while true; do echo hello world; sleep 1; done”</3></p>
+<p><3>后台运行(-d):<br>docker run -d ubuntu:18.04 /bin/sh -c “while true; do echo hello world; sleep 1; done”</3></p>
 <p><4>查看容器信息：docker container ls</4></p>
 <p><5> 获取容器的输出信息：docker container logs [container ID or NAMES]</5></p>
 <p><6>终止容器：docker container stop [container ID or NAMES]</6></p>
@@ -305,8 +339,10 @@ docker image rm $(docker image ls -q -f before=mongo:3.2)。（删除所有在mo
 </code></pre><p><2>查看映射端口配置：docker port nostalgic_morse 5000</2></p>
 <p><3> 新建网络：docker network create -d bridge my-net</3></p>
 <pre><code>&gt; -d 参数指定 Docker 网络类型，有 bridge overlay
-</code></pre><p><4>连接容器：docker run -it –rm –name busybox1 –network my-net busybox sh （运行一个容器并连接到新建的 my-net 网络）</4></p>
-<pre><code>docker run -it --rm --name busybox2 --network my-net busybox sh （再运行一个容器并加入到 my-net 网络）
+</code></pre><p><4>连接容器：</4></p>
+<pre><code>docker run -it --rm --name busybox1 --network my-net busybox sh （运行一个容器并连接到新建的 my-net 网络）
+
+docker run -it --rm --name busybox2 --network my-net busybox sh （再运行一个容器并加入到 my-net 网络）
 
 &gt; busybox1 与 busybox2 可相互ping通
 </code></pre><p>Example :</p>
@@ -342,7 +378,7 @@ docker image rm $(docker image ls -q -f before=mongo:3.2)。（删除所有在mo
     <div id="post-footer" class="post-footer main-content-wrap">
         
             <div class="post-footer-tags">
-                <span class="text-color-light text-small">标签</span><br>
+                <span class="text-color-light text-small">标签</span><br/>
                 
     <a class="tag tag--primary tag--small t-link" href="/tags/技术/">技术</a>
 
@@ -377,7 +413,7 @@ docker image rm $(docker image ls -q -f before=mongo:3.2)。（删除所有在mo
             <i class="fa fa-times"></i>
         </div>
         
-            <img id="about-card-picture" src="/assets/images/header.jpg" alt="作者的图片">
+            <img id="about-card-picture" src="/assets/images/header.jpg" alt="作者的图片"/>
         
             <h4 id="about-card-name">Jinnew</h4>
         
@@ -387,7 +423,7 @@ docker image rm $(docker image ls -q -f before=mongo:3.2)。（删除所有在mo
         
             <div id="about-card-job">
                 <i class="fa fa-briefcase"></i>
-                <br>
+                <br/>
                 <p>Thoughtworks</p>
 
             </div>
@@ -407,7 +443,9 @@ docker image rm $(docker image ls -q -f before=mongo:3.2)。（删除所有在mo
             </a>
             <i class="search-icon fa fa-search"></i>
             <form id="algolia-search-form">
-                <input type="text" id="algolia-search-input" name="search" class="form-control input--large search-input" placeholder="Search ">
+                <input type="text" id="algolia-search-input" name="search"
+                    class="form-control input--large search-input" placeholder="Search "
+                    />
             </form>
         </div>
         <div class="modal-body">
@@ -418,7 +456,7 @@ docker image rm $(docker image ls -q -f before=mongo:3.2)。（删除所有在mo
                     
                     <div class="media-left">
                         <a class="link-unstyled" href="/2019/04/12/welcome/">
-                            <img class="media-image" src="/2019/04/12/welcome/thumb.jpg" width="90" height="90">
+                            <img class="media-image" src="/2019/04/12/welcome/thumb.jpg" width="90" height="90"/>
                         </a>
                     </div>
                     
@@ -443,7 +481,7 @@ docker image rm $(docker image ls -q -f before=mongo:3.2)。（删除所有在mo
                     
                     <div class="media-left">
                         <a class="link-unstyled" href="/2019/10/09/docker/">
-                            <img class="media-image" src="/2019/10/09/docker/thumb.jpg" width="90" height="90">
+                            <img class="media-image" src="/2019/10/09/docker/thumb.jpg" width="90" height="90"/>
                         </a>
                     </div>
                     
@@ -467,7 +505,10 @@ docker image rm $(docker image ls -q -f before=mongo:3.2)。（删除所有在mo
             </div>
         </div>
         <div class="modal-footer">
-            <p class="results-count text-medium" data-message-zero="没有找到文章" data-message-one="找到 1 篇文章" data-message-other="找到 {n} 篇文章">
+            <p class="results-count text-medium"
+                data-message-zero="没有找到文章"
+                data-message-one="找到 1 篇文章"
+                data-message-other="找到 {n} 篇文章">
                 找到 2 篇文章
             </p>
         </div>
