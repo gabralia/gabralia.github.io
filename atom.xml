@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="/"/>
-  <updated>2019-10-10T02:20:49.240Z</updated>
+  <updated>2019-10-10T03:16:54.256Z</updated>
   <id>/</id>
   
   <author>
@@ -15,6 +15,26 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>linux常用命令</title>
+    <link href="/2019/10/10/linux/"/>
+    <id>/2019/10/10/linux/</id>
+    <published>2019-10-10T02:23:04.000Z</published>
+    <updated>2019-10-10T03:16:54.256Z</updated>
+    
+    <content type="html"><![CDATA[<p>man 命令名    #查看命令的详细说明<br>命令名 -help   #查看命令的常用选项</p><a id="more"></a><p><strong>1 下载与安装</strong></p><p>下载：</p><pre><code>wget url #下载文件 （wget 命令常用于下载）curl www.baidu.com #请求指定网址并显示 （curl 命令可用于各种请求方式，常用于上传与请求）</code></pre><p>安装：解压缩 （如：<span style="color: rgb(0, 0, 0);">tar -xzvf soft.tar.gz），进入解压后的文件夹</span></p><pre><code>./configure（生成makefile文件）makemake install</code></pre><p><strong>2 文件命令</strong></p><p>创建文件：touch 文件名</p><p>删除文件：rm -rf 文件名  #r代表递归，f代表强制删除</p><p>查看文件：</p><p><img src="/2019/10/10/linux/file.png" alt></p><p>建立软连接：ln -s 源文件 目标文件</p><pre><code>#文件名都必须写绝对路径#删除了源文件，那么目标文件就会被标识为红色，但仍指向源文件；重新新建源文件，目标文件依然可用</code></pre><p>比较文件差异：diff 选项 文件一  文件二</p><p><strong>3 目录操作</strong></p><p><img src="/2019/10/10/linux/dir.png" alt></p><p><strong>4 文件和目录操作</strong></p><p><img src="/2019/10/10/linux/file-and-dir.png" alt></p><p>更改用户：sudo chown -R $USER /usr/local/lib/node_modules</p><p><strong>5 权限管理</strong></p><p><img src="/2019/10/10/linux/right.png" alt></p><p><strong>6 压缩解压</strong></p><p><img src="/2019/10/10/linux/compress.png" alt></p><p><strong>7 查找搜索</strong></p><p><img src="/2019/10/10/linux/find.png" alt></p><p><strong>8 SSH</strong></p><p>ssh [-p port] user@remote</p><pre><code>user 是在远程机器上的用户名，如果不指定的话默认为当前用户remote 是远程机器的地址，可以是IP/域名，或者是别名port 是SSH Server监听的端口，如果不指定，就为默认值22(使用exit退出当前用户的登录)</code></pre><p>设置ssh密钥：ssh-keygen</p><p>上传公钥到服务器：</p><pre><code>ssh-copy-id -p port user@remote（ssh-copy-id -p 22 deepin2@192.168.56.132）让远程服务器记住密钥，之后免密登陆</code></pre><p><strong>9 快捷键</strong></p><p><img src="/2019/10/10/linux/shortcut.png" alt></p>]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;man 命令名    #查看命令的详细说明&lt;br&gt;命令名 -help   #查看命令的常用选项&lt;/p&gt;
+    
+    </summary>
+    
+    
+      <category term="常用命令" scheme="/tags/%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/"/>
+    
+  </entry>
   
   <entry>
     <title>git常见命令</title>
