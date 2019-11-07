@@ -1,0 +1,690 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="蜻蜓队长前来觐见">
+    <title>cloudFormation - 蜻蜓队长前来觐见</title>
+    <meta name="author" content="Jinnew">
+    
+    
+    
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Jinnew","sameAs":["https://github.com/gabralia","/#about"],"image":"header.jpg"},"articleBody":"概念\n\nAWS CloudFormation 是一项服务，可对 Amazon Web Services 资源进行建模和设置，花较少的时间管理这些资源，将更多的时间花在运行于 AWS 中的应用程序上。创建一个描述所需的所有 AWS 资源（如 Amazon EC2 实例或 Amazon RDS 数据库实例）的模板，并且 AWS CloudFormation 将负责设置和配置这些资源。无需单独创建和配置 AWS 资源， AWS CloudFormation 句柄处理工作时所依赖的内容。\n\n模板 （template）\n\nCloudFormation 模板是 JSON 或 YAML 格式的文本文件。可以使用任何扩展名（如 .json、.yaml、.template 或 .txt）保存这些文件。CloudFormation 将这些模板作为蓝图以构建 AWS 资源。可以在单个模板中指定多种资源并将这些资源配置结合使用\n\n\n堆栈（stack）\n\n在使用 CloudFormation 时，可将相关资源作为一个称为“堆栈”的单元进行管理。可通过创建、更新和删除堆栈来管理一组资源。堆栈中的所有资源均由 CloudFormation 模板定义。假设创建了一个模板，它包括 Auto Scaling 组、Elastic Load Balancing 负载均衡器和 Amazon Relational Database Service (Amazon RDS) 数据库实例。要创建这些资源，可通过提交已创建的模板来创建堆栈，CloudFormation 将会配置所有这些资源。\n\n\n更改集（change set）\n\n如果需要更改堆栈中运行的资源，可更新堆栈。在更改资源前，您可以生成一个更改集，这是修改内容的概括。利用更改集，您可以在实施更改之前，了解更改可能会对运行的资源造成的影响。\n\n\n\n入门资源（resource）Resources对象包含一系列资源对象，一个资源需要声明资源的属性，且必须有一个Type属性，该属性规定了要创建AWS资源的类别。该Type属性有一个特殊格式：\n\nAWS::ProductIdentifier::ResourceType\n\nFor example: resource type for an Amazon S3 bucket\n1234567&#123;    \"Resources\" : &#123;        \"HelloBucket\" : &#123;            \"Type\" : \"AWS::S3::Bucket\"        &#125;    &#125;&#125;\n\nYAML:\n123Resources:  HelloBucket:    Type: AWS::S3::Bucket\n\n根据资源类型，一些属性是必需的，而其他属性是可选的。\n\n资源属性（properties）和共同使用资源\n\n有些资源可以有多个属性，有些属性可以有多个子属性，例如，AWS::S3::Bucket 资源具有两个属性，即 AccessControl 和 WebsiteConfiguration。WebsiteConfiguration 属性有 IndexDocument 和 ErrorDocument 两个子属性\n12345678Resources:  HelloBucket:    Type: AWS::S3::Bucket    Properties:      AccessControl: PublicRead （指代了一个已存在的 ACL）      WebsiteConfiguration:        IndexDocument: index.html        ErrorDocument: error.html\n\nRef funtion:set properties on one resource based on the name or property of another resource, can use the Ref function to refer to an identifying property of a resource例如，创建一个 AWS::EC2::Instance 资源，该资源的 SecurityGroups 属性调用了 Ref 函数，以便能调用 AWS::EC2::SecurityGroup 资源\n123456789101112131415161718Resources:  Ec2Instance:    Type: 'AWS::EC2::Instance'    Properties:      SecurityGroups:        - !Ref InstanceSecurityGroup        - MyExistingSecurityGroup （指代现存的 EC2 安全组）      KeyName: mykey      ImageId: ''  InstanceSecurityGroup:    Type: 'AWS::EC2::SecurityGroup'    Properties:      GroupDescription: Enable SSH access via port 22      SecurityGroupIngress:        - IpProtocol: tcp          FromPort: '22'          ToPort: '22'          CidrIp: 0.0.0.0/0\n\nRef 函数可指代那些在创建堆栈时指定的输入参数（Parameters），以下模板添加了一个 KeyName 参数对象，参数类型为 AWS::EC2::KeyPair::KeyName\n12345678910111213141516171819202122Parameters:  KeyName:    Description: The EC2 Key Pair to allow SSH access to the instance    Type: 'AWS::EC2::KeyPair::KeyName'Resources:  Ec2Instance:    Type: 'AWS::EC2::Instance'    Properties:      SecurityGroups:        - !Ref InstanceSecurityGroup        - MyExistingSecurityGroup      KeyName: !Ref KeyName      ImageId: ami-7a11e213  InstanceSecurityGroup:    Type: 'AWS::EC2::SecurityGroup'    Properties:      GroupDescription: Enable SSH access via port 22      SecurityGroupIngress:        - IpProtocol: tcp          FromPort: '22'          ToPort: '22'          CidrIp: 0.0.0.0/0\n\nFn::GetAtt:返回模板中的资源的属性值，FN::GetAtt 函数有两个参数，资源的逻辑名和要检索的属性名示例代码返回 myELB 资源的 DNS 属性名称。json:\n1\"Fn::GetAtt\" : [ \"myELB\" , \"DNSName\" ]\n\nyaml:\n1!GetAtt myELB.DNSName\n\n\nParameters\n\n123456789101112131415161718Parameters:  KeyName:    Description: Name of an existing EC2 KeyPair to enable SSH access into the WordPress web server    Type: AWS::EC2::KeyPair::KeyName  WordPressUser:    Default: admin    NoEcho: true    Description: The WordPress database admin account user name    Type: String    MinLength: 1    MaxLength: 16    AllowedPattern: \"[a-zA-Z][a-zA-Z0-9]*\"  WebServerPort:    Default: 8888    Description: TCP/IP port for the WordPress web server    Type: Number    MinValue: 1    MaxValue: 65535\n\n参数可以有默认值，string类型可以指定MinLength、MaxLength、Default、AllowedValues 和 AllowedPattern；Number类型可以指定MinValue、MaxValue、Default 和 AllowedValues；NoEcho 属性属性让参数值不显示在控制台、命令行工具或 API 上，设置为 true将以星号的形式返回参数值\n\n使用映射（Mappings）指定条件型值\n\n可能会有一些根据区域而定的配置，例如 ImageId 属性写为固定的AMI ID在美国东部区域可正常使用，但用户尝试在不同区域的创建堆栈，那么将会得到一个错误的 AMI ID或得不到，因为AMI ID 对一个区域来说是唯一的，但在不同的区域同一个 AMI ID 代表内容不同，因此可使用AWS::Region 与 Mappings 对象结合，为每一个区域设置一个适当的 AMI ID\n1234567891011121314151617181920212223242526Parameters:  KeyName:    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance    Type: StringMappings:  RegionMap:    us-east-1:      AMI: ami-76f0061f    us-west-1:      AMI: ami-655a0a20    eu-west-1:      AMI: ami-7fd4e10b    ap-southeast-1:      AMI: ami-72621c20    ap-northeast-1:      AMI: ami-8e08a38fResources:  Ec2Instance:    Type: 'AWS::EC2::Instance'    Properties:      KeyName: !Ref KeyName      ImageId: !FindInMap         - RegionMap        - !Ref 'AWS::Region'        - AMI      UserData: !Base64 '80'\n\n\nFn::Join\n\n可能存在参数值仅仅是所需值的一部分的情况，这时就需要对参数值进行拼接，以便形成所需值函数有两个参数，一个是值的分隔符，另一个是按这些值出现的顺序排列的数组例如 WebServerPort 值为 8888，目标属性将为：HTTP:8888/\n12345Target: !Join   - ''  - - 'HTTP:'    - !Ref WebServerPort    - /\n\nAWS CLI\n创建堆栈: \n\n1aws cloudformation create-stack\n\n必须提供堆栈名称、有效模板的位置和所有输入参数,参数以空格分隔，键名称区分大小写注：如果指定了一个本地模板文件，则 CloudFormation 会将该文件上传到您的 AWS 账户中的 Amazon S3 存储桶\n1aws cloudformation create-stack --stack-name myteststack --template-body file:///home/testuser/mytemplate.json\n\n\n描述并列出堆栈\n\n12aws cloudformation list-stacksaws cloudformation describe-stacks\n\n使用 aws cloudformation list-stacks 命令可以获取已创建的任何堆栈的列表 (甚至包括已在90天内删除的堆栈)。可以使用选项按堆栈状态 (如 CREATE_COMPLETE 和 DELETE_COMPLETE) 筛选结果\n1aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE\n\naws cloudformation describe-stacks 命令提供正在运行的堆栈的相关信息。可以使用选项按堆栈名称筛选结果\n1aws cloudformation describe-stacks --stack-name myteststack\n\n\n列出资源\n\n1aws cloudformation list-stack-resources --stack-name myteststack\n\n列出资源, 该命令将列出您使用 –stack-name 参数指定的堆栈中的每个资源的汇总信息注：aws cloudformation describe-stack-resources 命令可返回90天内删除的堆栈的信息\n\n检索模板\n\n1aws cloudformation get-template --stack-name myteststack\n\n模板存储为堆栈的一部分,可返回90天内删除的模板信息\n-验证模板\n1aws cloudformation validate-template\n\n检查您的模板文件是否存在语法错误在验证期间，首先检查模板是否是有效的 JSON。如果不是，AWS CloudFormation 会检查模板是否是有效的 YAML。如果两种检查都失败，AWS CloudFormation 会返回模板验证错误。您可以使用 –template-body 参数在本地验证模板，也可以使用 –template-url 参数进行远程验证\n1aws cloudformation validate-template --template-url https://s3.amazonaws.com/cloudformation-templates-us-east-1/S3_Bucket.template\n\n\n删除堆栈\n\n1aws cloudformation delete-stack --stack-name myteststack\n\n堆栈更新CloudFormation 会对比提交的内容与堆栈当前模板来更新资源。未更改的资源在更新过程中不中断。对于更新后的资源，CloudFormation 可能使用下列更新行为：\n\nUpdate with No Interruption\n\nCloudFormation 在更新资源时不中断该资源，同时不改变资源物理 ID。例如：更新AWS::CloudTrail::Trail将不会打断资源运行\n\nUpdates with Some Interruption\n\nCloudFormation 更新资源时会中断，并且保留物理 ID。例如对 AWS::EC2::Instance 资源更新特定属性，则在 CloudFormation 和 EC2 重新配置实例期间，该实例可能会中断。\n\nReplacementCloudFormation 在更新过程中重新创建资源，这还会生成新的物理 ID。CloudFormation 会先创建替换资源，将其他相关资源的引用变为指向替换资源，然后删除旧资源。例如，如果更新 AWS::RDS::DBInstance 资源类型的 Engine 属性，则 AWS CloudFormation 会创建新资源并将当前数据库实例资源替换为新资源。\n\nCloudFormation 使用的更新行为取决于要更新的资源属性。 AWS Resource Types Reference 介绍了每个属性的更新行为。\n使用更改集更新堆栈使用更改集可以预览更改对正在运行的资源造成什么影响，例如，无论更改是否会删除或替换任何关键资源，只有在决定执行更改集时，CloudFormation 才会对堆栈进行更改，这样可以决定是否继续执行更改，还是通过创建另一个更改集来探索其他更改。\nhow to use change set to update a stack:\n1.通过为堆栈提交更改来创建更改集。您可以提交修改后的stack template或者修改后的输入参数值。CloudFormation 将堆栈与所提交更改进行对比，生成更改集；此时不会更改堆栈。\n2.查看更改集以了解将更改哪些堆栈设置和资源。例如，可以查看CloudFormation 将添加、修改或删除哪些资源。\n3.可选：如果想在决定更改之前考虑其他更改，请创建其他的更改集。创建多个更改集可了解和评估不同的更改对资源会造成什么影响，可以根据需要创建任意数量的更改集。\n4.执行希望应用到堆栈的更改集。CloudFormation 使用这些更改更新您的堆栈。\n注：执行更改后，CloudFormation 将删除与堆栈关联的所有更改集\n\n创建更改集\n\n1aws cloudformation create-change-set\n\n指定新参数值和/或修改后的模板。以下命令为 SampleChangeSet 堆栈创建名为 SampleStack 的更改集。更改集使用当前堆栈的模板，但 Purpose 参数具有不同值：\n12aws cloudformation create-change-set --stack-name arn:aws:cloudformation:us-east-1:123456789012:stack/SampleStack/1a2345b6-0000-00a0-a123-00abc0abc000--change-set-name SampleChangeSet --use-previous-template --parameters ParameterKey=\"InstanceType\",UsePreviousValue=true ParameterKey=\"KeyPairName\",UsePreviousValue=true ParameterKey=\"Purpose\",ParameterValue=\"production\"\n\n\n查看更改集\n\n12345aws cloudformation list-change-sets --stack-name arn:aws:cloudformation:us-east-1:123456789012:stack/SampleStack/1a2345b6-0000-00a0-a123-00abc0abc000(stack id)aws cloudformation describe-change-set --change-set-name arn:aws:cloudformation:us-east-1:123456789012:changeSet/SampleChangeSet/1a2345b6-0000-00a0-a123-00abc0abc000(change set id)\n\n\n执行更改集 (change set id)\n\n1aws cloudformation execute-change-set --change-set-name arn:aws:cloudformation:us-east-1:123456789012:changeSet/SampleChangeSet/1a2345b6-0000-00a0-a123-00abc0abc000\n\n\n删除更改集 (change set id)\n\n1aws cloudformation delete-change-set --change-set-name arn:aws:cloudformation:us-east-1:123456789012:changeSet/SampleChangeSet/1a2345b6-0000-00a0-a123-00abc0abc000\n\n\n直接更新堆栈\n\n1aws cloudformation update-stack --stack-name mystack --template-url https://s3.amazonaws.com/sample/updated.template\n\n运行当创建堆栈时，CloudFormation 对 AWS 基础服务调用配置资源。CloudFormation 只能执行有执行权限的操作。例如，要使用 CloudFormation 创建 EC2 实例，需要具有创建实例的权限。可以使用 Identity and Access Management (IAM) 管理权限。\nCloudFormation 进行的调用全部由模板声明\n\n\n更改集更新堆栈\n\n更新堆栈的资源，不需要创建新堆栈和删除旧堆栈\n\n注：更改集并不指示堆栈更新是否会成功。例如，更改集不检查是否将超出账户限制、是否将更新不支持更新的资源或者权限不足而无法修改资源，这些都将导致堆栈更新失败。\n\n删除堆栈\n\n在删除堆栈时，可指定要删除的堆栈，CloudFormation 将删除该堆栈及其包含的所有资源若要删除一个堆栈但保留该堆栈中的一些资源，可使用删除策略来保留那些资源\n设置\n使用 IAM 控制访问\n\n可以创建 IAM 用户以控制谁有权访问 AWS 账户中的哪些资源。可以将 IAM 与 CloudFormation 结合以控制用户使用 CloudFormation 执行操作，例如，是否可以查看堆栈模板、创建堆栈或删除堆栈。\nWhen you create a group or an IAM user in your AWS account, you can associate an IAM policy with that group or user, which specifies the permissions that you want to grant. \n12345678910111213&#123;    \"Version\":\"2012-10-17\",    \"Statement\":[&#123;        \"Effect\":\"Allow\",        \"Action\":[            \"cloudformation:DescribeStacks\",            \"cloudformation:DescribeStackEvents\",            \"cloudformation:DescribeStackResource\",            \"cloudformation:DescribeStackResources\"        ],        \"Resource\":\"*\"    &#125;]&#125;\n\n 注：If you don’t specify a stack name or ID in your statement, you must also grant the permission to use all resources for the action using the * wildcard for the Resource element.\n\nCloudFormation 资源\n\nCloudFormation 支持资源级权限，因此可以指定针对特定堆栈的操作。如拒绝MyProductionStack 的删除和更新堆栈操作的策略示例\n1234567891011&#123;    \"Version\":\"2012-10-17\",    \"Statement\":[&#123;        \"Effect\":\"Deny\",        \"Action\":[            \"cloudformation:DeleteStack\",            \"cloudformation:UpdateStack\"        ],        \"Resource\":\"arn:aws:cloudformation:us-east-1:123456789012:stack/MyProductionStack/*\"    &#125;]&#125;\n\n\nCloudFormation 条件\n\n可以指定控制策略何时生效\nAWS::*指定所有 AWS 资源。\nAWS::service_name::*指定用于特定 AWS 服务的所有资源。\nAWS::service_name::resource_type指定特定的 AWS 资源类型，如 AWS::EC2::Instance (所有 EC2 实例)。\nCustom::*指定所有自定义资源。\nCustom::resource_type指定特定的自定义资源类型 (在模板中定义)。\ncloudformation:RoleARNUse this condition to control which service role IAM users can use when they work with stacks or change sets.\ncloudformation:StackPolicyUrl在创建或更新堆栈操作期间，使用此条件控制 IAM 用户可将哪些堆栈policy关联到堆栈 。\ncloudformation:TemplateUrl与策略关联的 S3 模板 URL。使用此条件控制 IAM 用户在创建或更新堆栈时可以使用的模板。\n示例中用户只能使用 https://s3.amazonaws.com/testbucket/test.template 模板 URL 创建或更新堆栈。\n1234567891011121314151617&#123;  \"Version\":\"2012-10-17\",  \"Statement\":[    &#123;      \"Effect\" : \"Allow\",      \"Action\" : [       \"cloudformation:CreateStack\",      \"cloudformation:UpdateStack\" ],      \"Resource\" : \"*\",      \"Condition\" : &#123;        \"ForAllValues:StringEquals\" : &#123;          \"cloudformation:TemplateUrl\" : [ \"https://s3.amazonaws.com/testbucket/test.template\" ]        &#125;      &#125;    &#125;  ]&#125;\n\n","dateCreated":"2019-11-07T23:06:12+08:00","dateModified":"2019-11-08T00:31:55+08:00","datePublished":"2019-11-07T23:06:12+08:00","description":"概念","headline":"cloudFormation","image":["docker.png","cover.png"],"mainEntityOfPage":{"@type":"WebPage","@id":"/2019/11/07/cloudFormation/"},"publisher":{"@type":"Organization","name":"Jinnew","sameAs":["https://github.com/gabralia","/#about"],"image":"header.jpg","logo":{"@type":"ImageObject","url":"header.jpg"}},"url":"/2019/11/07/cloudFormation/","keywords":"常用命令","thumbnailUrl":"docker.png"}</script>
+    <meta name="description" content="概念">
+<meta name="keywords" content="常用命令">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="cloudFormation">
+<meta property="og:url" content="/2019/11/07/cloudFormation/index.html">
+<meta property="og:site_name" content="蜻蜓队长前来觐见">
+<meta property="og:description" content="概念">
+<meta property="og:locale" content="zh-cn">
+<meta property="og:image" content="/2019/11/07/cloudFormation/56C876CF-CF0B-458E-9F4D-5E604F746D6F.png">
+<meta property="og:image" content="/2019/11/07/cloudFormation/BA8B245C-410A-4657-B803-48EB29A2EAE8.png">
+<meta property="og:image" content="/2019/11/07/cloudFormation/EB5E28F6-D3B2-4CB4-9484-6F7D06074D34.png">
+<meta property="og:updated_time" content="2019-11-07T16:31:55.478Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="cloudFormation">
+<meta name="twitter:description" content="概念">
+<meta name="twitter:image" content="/2019/11/07/cloudFormation/56C876CF-CF0B-458E-9F4D-5E604F746D6F.png">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="/assets/images/header.jpg"/>
+    
+    
+        <meta property="og:image" content="/2019/11/07/cloudFormation/docker.png"/>
+        <meta class="swiftype" name="image" data-type="enum" content="/2019/11/07/cloudFormation/docker.png" />
+    
+    
+        <meta property="og:image" content="/2019/11/07/cloudFormation/cover.png"/>
+        <meta class="swiftype" name="image" data-type="enum" content="/2019/11/07/cloudFormation/cover.png" />
+    
+    
+    <!--STYLES-->
+    <link rel="stylesheet" href="/assets/css/style-c4ozcsklz4kht2pebhp44xorvyverh23toayhn7i6ubrpyedak24hv1v0hyd.min.css">
+    <!--STYLES END-->
+    
+
+    
+</head>
+
+    <body>
+        <div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a class="header-title-link" href="/ ">蜻蜓队长前来觐见</a>
+    </div>
+    
+        
+            <a  class="header-right-picture "
+                href="#about">
+        
+        
+            <img class="header-picture" src="/assets/images/header.jpg" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a href="/#about">
+                    <img class="sidebar-profile-picture" src="/assets/images/header.jpg" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Jinnew</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>一个喜欢发呆,喜欢画画,正在研究如何使用魔法，不务正业的程序员</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/ "
+                            
+                            title="首页"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-categories"
+                            
+                            title="分类"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-bookmark" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">分类</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-tags"
+                            
+                            title="标签"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-archives"
+                            
+                            title="归档"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link open-algolia-search"
+                             href="#search"
+                            
+                            title="搜索"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-search" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">搜索</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="https://github.com/gabralia"
+                            title="GitHub"
+                        >
+                    
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="#about"
+                            
+                            title="关于"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/atom.xml"
+                            
+                            title="RSS"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+        <div class="post-header-cover
+                    text-center
+                    post-header-cover--partial"
+             style="background-image:url('/2019/11/07/cloudFormation/cover.png');"
+             data-behavior="4">
+            
+                <div class="post-header main-content-wrap text-center">
+    
+        <h1 class="post-title">
+            cloudFormation
+        </h1>
+    
+    
+</div>
+
+            
+        </div>
+
+            <div id="main" data-behavior="4"
+                 class="hasCover
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <h4 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h4><a id="more"></a>
+
+<p>AWS CloudFormation 是一项服务，可对 Amazon Web Services 资源进行建模和设置，花较少的时间管理这些资源，将更多的时间花在运行于 AWS 中的应用程序上。创建一个描述所需的所有 AWS 资源（如 Amazon EC2 实例或 Amazon RDS 数据库实例）的模板，并且 AWS CloudFormation 将负责设置和配置这些资源。无需单独创建和配置 AWS 资源， AWS CloudFormation 句柄处理工作时所依赖的内容。</p>
+<ul>
+<li><p>模板 （template）</p>
+<blockquote>
+<p>CloudFormation 模板是 JSON 或 YAML 格式的文本文件。可以使用任何扩展名（如 .json、.yaml、.template 或 .txt）保存这些文件。CloudFormation 将这些模板作为蓝图以构建 AWS 资源。<br>可以在单个模板中指定多种资源并将这些资源配置结合使用</p>
+</blockquote>
+</li>
+<li><p>堆栈（stack）</p>
+<blockquote>
+<p>在使用 CloudFormation 时，可将相关资源作为一个称为“堆栈”的单元进行管理。可通过创建、更新和删除堆栈来管理一组资源。堆栈中的所有资源均由 CloudFormation 模板定义。假设创建了一个模板，它包括 Auto Scaling 组、Elastic Load Balancing 负载均衡器和 Amazon Relational Database Service (Amazon RDS) 数据库实例。要创建这些资源，可通过提交已创建的模板来创建堆栈，CloudFormation 将会配置所有这些资源。</p>
+</blockquote>
+</li>
+<li><p>更改集（change set）</p>
+<blockquote>
+<p>如果需要更改堆栈中运行的资源，可更新堆栈。在更改资源前，您可以生成一个更改集，这是修改内容的概括。利用更改集，您可以在实施更改之前，了解更改可能会对运行的资源造成的影响。</p>
+</blockquote>
+</li>
+</ul>
+<h4 id="入门"><a href="#入门" class="headerlink" title="入门"></a>入门</h4><h5 id="资源（resource）"><a href="#资源（resource）" class="headerlink" title="资源（resource）"></a>资源（resource）</h5><p>Resources对象包含一系列资源对象，一个资源需要声明资源的属性，且必须有一个Type属性，该属性规定了要创建AWS资源的类别。该Type属性有一个特殊格式：</p>
+<blockquote>
+<p>AWS::ProductIdentifier::ResourceType</p>
+</blockquote>
+<p>For example: resource type for an Amazon S3 bucket</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"Resources"</span> : &#123;</span><br><span class="line">        <span class="attr">"HelloBucket"</span> : &#123;</span><br><span class="line">            <span class="attr">"Type"</span> : <span class="string">"AWS::S3::Bucket"</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>YAML:</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">Resources:</span></span><br><span class="line"><span class="attr">  HelloBucket:</span></span><br><span class="line"><span class="attr">    Type:</span> <span class="attr">AWS::S3::Bucket</span></span><br></pre></td></tr></table></figure>
+
+<p>根据资源类型，一些属性是必需的，而其他属性是可选的。</p>
+<ul>
+<li>资源属性（properties）和共同使用资源</li>
+</ul>
+<p>有些资源可以有多个属性，有些属性可以有多个子属性，例如，AWS::S3::Bucket 资源具有两个属性，即 AccessControl 和 WebsiteConfiguration。WebsiteConfiguration 属性有 IndexDocument 和 ErrorDocument 两个子属性</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">Resources:</span></span><br><span class="line"><span class="attr">  HelloBucket:</span></span><br><span class="line"><span class="attr">    Type:</span> <span class="attr">AWS::S3::Bucket</span></span><br><span class="line"><span class="attr">    Properties:</span></span><br><span class="line"><span class="attr">      AccessControl:</span> <span class="string">PublicRead</span> <span class="string">（指代了一个已存在的</span> <span class="string">ACL）</span></span><br><span class="line"><span class="attr">      WebsiteConfiguration:</span></span><br><span class="line"><span class="attr">        IndexDocument:</span> <span class="string">index.html</span></span><br><span class="line"><span class="attr">        ErrorDocument:</span> <span class="string">error.html</span></span><br></pre></td></tr></table></figure>
+
+<p>Ref funtion:<br>set properties on one resource based on the name or property of another resource, can use the <code>Ref function</code> to refer to an identifying property of a resource<br>例如，创建一个 AWS::EC2::Instance 资源，该资源的 SecurityGroups 属性调用了 Ref 函数，以便能调用 AWS::EC2::SecurityGroup 资源</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">Resources:</span></span><br><span class="line"><span class="attr">  Ec2Instance:</span></span><br><span class="line"><span class="attr">    Type:</span> <span class="string">'AWS::EC2::Instance'</span></span><br><span class="line"><span class="attr">    Properties:</span></span><br><span class="line"><span class="attr">      SecurityGroups:</span></span><br><span class="line"><span class="bullet">        -</span> <span class="type">!Ref</span> <span class="string">InstanceSecurityGroup</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">MyExistingSecurityGroup</span> <span class="string">（指代现存的</span> <span class="string">EC2</span> <span class="string">安全组）</span></span><br><span class="line"><span class="attr">      KeyName:</span> <span class="string">mykey</span></span><br><span class="line"><span class="attr">      ImageId:</span> <span class="string">''</span></span><br><span class="line"><span class="attr">  InstanceSecurityGroup:</span></span><br><span class="line"><span class="attr">    Type:</span> <span class="string">'AWS::EC2::SecurityGroup'</span></span><br><span class="line"><span class="attr">    Properties:</span></span><br><span class="line"><span class="attr">      GroupDescription:</span> <span class="string">Enable</span> <span class="string">SSH</span> <span class="string">access</span> <span class="string">via</span> <span class="string">port</span> <span class="number">22</span></span><br><span class="line"><span class="attr">      SecurityGroupIngress:</span></span><br><span class="line"><span class="attr">        - IpProtocol:</span> <span class="string">tcp</span></span><br><span class="line"><span class="attr">          FromPort:</span> <span class="string">'22'</span></span><br><span class="line"><span class="attr">          ToPort:</span> <span class="string">'22'</span></span><br><span class="line"><span class="attr">          CidrIp:</span> <span class="number">0.0</span><span class="number">.0</span><span class="number">.0</span><span class="string">/0</span></span><br></pre></td></tr></table></figure>
+
+<p>Ref 函数可指代那些在创建堆栈时指定的输入参数（Parameters），以下模板添加了一个 KeyName 参数对象，参数类型为 AWS::EC2::KeyPair::KeyName</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">Parameters:</span></span><br><span class="line"><span class="attr">  KeyName:</span></span><br><span class="line"><span class="attr">    Description:</span> <span class="string">The</span> <span class="string">EC2</span> <span class="string">Key</span> <span class="string">Pair</span> <span class="string">to</span> <span class="string">allow</span> <span class="string">SSH</span> <span class="string">access</span> <span class="string">to</span> <span class="string">the</span> <span class="string">instance</span></span><br><span class="line"><span class="attr">    Type:</span> <span class="string">'AWS::EC2::KeyPair::KeyName'</span></span><br><span class="line"><span class="attr">Resources:</span></span><br><span class="line"><span class="attr">  Ec2Instance:</span></span><br><span class="line"><span class="attr">    Type:</span> <span class="string">'AWS::EC2::Instance'</span></span><br><span class="line"><span class="attr">    Properties:</span></span><br><span class="line"><span class="attr">      SecurityGroups:</span></span><br><span class="line"><span class="bullet">        -</span> <span class="type">!Ref</span> <span class="string">InstanceSecurityGroup</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">MyExistingSecurityGroup</span></span><br><span class="line"><span class="attr">      KeyName:</span> <span class="type">!Ref</span> <span class="string">KeyName</span></span><br><span class="line"><span class="attr">      ImageId:</span> <span class="string">ami-7a11e213</span></span><br><span class="line"><span class="attr">  InstanceSecurityGroup:</span></span><br><span class="line"><span class="attr">    Type:</span> <span class="string">'AWS::EC2::SecurityGroup'</span></span><br><span class="line"><span class="attr">    Properties:</span></span><br><span class="line"><span class="attr">      GroupDescription:</span> <span class="string">Enable</span> <span class="string">SSH</span> <span class="string">access</span> <span class="string">via</span> <span class="string">port</span> <span class="number">22</span></span><br><span class="line"><span class="attr">      SecurityGroupIngress:</span></span><br><span class="line"><span class="attr">        - IpProtocol:</span> <span class="string">tcp</span></span><br><span class="line"><span class="attr">          FromPort:</span> <span class="string">'22'</span></span><br><span class="line"><span class="attr">          ToPort:</span> <span class="string">'22'</span></span><br><span class="line"><span class="attr">          CidrIp:</span> <span class="number">0.0</span><span class="number">.0</span><span class="number">.0</span><span class="string">/0</span></span><br></pre></td></tr></table></figure>
+
+<p>Fn::GetAtt:<br>返回模板中的资源的属性值，FN::GetAtt 函数有两个参数，资源的逻辑名和要检索的属性名<br>示例代码返回 myELB 资源的 DNS 属性名称。<br>json:</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">"Fn::GetAtt" : [ "myELB" , "DNSName" ]</span><br></pre></td></tr></table></figure>
+
+<p>yaml:</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">!GetAtt</span> <span class="string">myELB.DNSName</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>Parameters</li>
+</ul>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">Parameters:</span></span><br><span class="line"><span class="attr">  KeyName:</span></span><br><span class="line"><span class="attr">    Description:</span> <span class="string">Name</span> <span class="string">of</span> <span class="string">an</span> <span class="string">existing</span> <span class="string">EC2</span> <span class="string">KeyPair</span> <span class="string">to</span> <span class="string">enable</span> <span class="string">SSH</span> <span class="string">access</span> <span class="string">into</span> <span class="string">the</span> <span class="string">WordPress</span> <span class="string">web</span> <span class="string">server</span></span><br><span class="line"><span class="attr">    Type:</span> <span class="attr">AWS::EC2::KeyPair::KeyName</span></span><br><span class="line"><span class="attr">  WordPressUser:</span></span><br><span class="line"><span class="attr">    Default:</span> <span class="string">admin</span></span><br><span class="line"><span class="attr">    NoEcho:</span> <span class="literal">true</span></span><br><span class="line"><span class="attr">    Description:</span> <span class="string">The</span> <span class="string">WordPress</span> <span class="string">database</span> <span class="string">admin</span> <span class="string">account</span> <span class="string">user</span> <span class="string">name</span></span><br><span class="line"><span class="attr">    Type:</span> <span class="string">String</span></span><br><span class="line"><span class="attr">    MinLength:</span> <span class="number">1</span></span><br><span class="line"><span class="attr">    MaxLength:</span> <span class="number">16</span></span><br><span class="line"><span class="attr">    AllowedPattern:</span> <span class="string">"[a-zA-Z][a-zA-Z0-9]*"</span></span><br><span class="line"><span class="attr">  WebServerPort:</span></span><br><span class="line"><span class="attr">    Default:</span> <span class="number">8888</span></span><br><span class="line"><span class="attr">    Description:</span> <span class="string">TCP/IP</span> <span class="string">port</span> <span class="string">for</span> <span class="string">the</span> <span class="string">WordPress</span> <span class="string">web</span> <span class="string">server</span></span><br><span class="line"><span class="attr">    Type:</span> <span class="string">Number</span></span><br><span class="line"><span class="attr">    MinValue:</span> <span class="number">1</span></span><br><span class="line"><span class="attr">    MaxValue:</span> <span class="number">65535</span></span><br></pre></td></tr></table></figure>
+
+<p>参数可以有默认值，string类型可以指定MinLength、MaxLength、Default、AllowedValues 和 AllowedPattern；Number类型可以指定MinValue、MaxValue、Default 和 AllowedValues；NoEcho 属性属性让参数值不显示在控制台、命令行工具或 API 上，设置为 true将以星号的形式返回参数值</p>
+<ul>
+<li>使用映射（Mappings）指定条件型值</li>
+</ul>
+<p>可能会有一些根据区域而定的配置，例如 ImageId 属性写为固定的AMI ID在美国东部区域可正常使用，但用户尝试在不同区域的创建堆栈，那么将会得到一个错误的 AMI ID或得不到，因为AMI ID 对一个区域来说是唯一的，但在不同的区域同一个 AMI ID 代表内容不同，因此可使用AWS::Region 与 Mappings 对象结合，为每一个区域设置一个适当的 AMI ID</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">Parameters:</span></span><br><span class="line"><span class="attr">  KeyName:</span></span><br><span class="line"><span class="attr">    Description:</span> <span class="string">Name</span> <span class="string">of</span> <span class="string">an</span> <span class="string">existing</span> <span class="string">EC2</span> <span class="string">KeyPair</span> <span class="string">to</span> <span class="string">enable</span> <span class="string">SSH</span> <span class="string">access</span> <span class="string">to</span> <span class="string">the</span> <span class="string">instance</span></span><br><span class="line"><span class="attr">    Type:</span> <span class="string">String</span></span><br><span class="line"><span class="attr">Mappings:</span></span><br><span class="line"><span class="attr">  RegionMap:</span></span><br><span class="line"><span class="attr">    us-east-1:</span></span><br><span class="line"><span class="attr">      AMI:</span> <span class="string">ami-76f0061f</span></span><br><span class="line"><span class="attr">    us-west-1:</span></span><br><span class="line"><span class="attr">      AMI:</span> <span class="string">ami-655a0a20</span></span><br><span class="line"><span class="attr">    eu-west-1:</span></span><br><span class="line"><span class="attr">      AMI:</span> <span class="string">ami-7fd4e10b</span></span><br><span class="line"><span class="attr">    ap-southeast-1:</span></span><br><span class="line"><span class="attr">      AMI:</span> <span class="string">ami-72621c20</span></span><br><span class="line"><span class="attr">    ap-northeast-1:</span></span><br><span class="line"><span class="attr">      AMI:</span> <span class="string">ami-8e08a38f</span></span><br><span class="line"><span class="attr">Resources:</span></span><br><span class="line"><span class="attr">  Ec2Instance:</span></span><br><span class="line"><span class="attr">    Type:</span> <span class="string">'AWS::EC2::Instance'</span></span><br><span class="line"><span class="attr">    Properties:</span></span><br><span class="line"><span class="attr">      KeyName:</span> <span class="type">!Ref</span> <span class="string">KeyName</span></span><br><span class="line"><span class="attr">      ImageId:</span> <span class="type">!FindInMap</span> </span><br><span class="line"><span class="bullet">        -</span> <span class="string">RegionMap</span></span><br><span class="line"><span class="bullet">        -</span> <span class="type">!Ref</span> <span class="string">'AWS::Region'</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">AMI</span></span><br><span class="line"><span class="attr">      UserData:</span> <span class="type">!Base64</span> <span class="string">'80'</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>Fn::Join</li>
+</ul>
+<p>可能存在参数值仅仅是所需值的一部分的情况，这时就需要对参数值进行拼接，以便形成所需值<br>函数有两个参数，一个是值的分隔符，另一个是按这些值出现的顺序排列的数组<br>例如 WebServerPort 值为 8888，目标属性将为：HTTP:8888/</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">Target:</span> <span class="type">!Join</span> </span><br><span class="line"><span class="bullet">  -</span> <span class="string">''</span></span><br><span class="line"><span class="bullet">  -</span> <span class="bullet">-</span> <span class="string">'HTTP:'</span></span><br><span class="line"><span class="bullet">    -</span> <span class="type">!Ref</span> <span class="string">WebServerPort</span></span><br><span class="line"><span class="bullet">    -</span> <span class="string">/</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="AWS-CLI"><a href="#AWS-CLI" class="headerlink" title="AWS CLI"></a>AWS CLI</h4><ul>
+<li>创建堆栈: </li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">aws cloudformation create-stack</span><br></pre></td></tr></table></figure>
+
+<p>必须提供堆栈名称、有效模板的位置和所有输入参数,参数以空格分隔，键名称区分大小写<br>注：如果指定了一个本地模板文件，则 CloudFormation 会将该文件上传到您的 AWS 账户中的 Amazon S3 存储桶</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">aws cloudformation create-stack --stack-name myteststack --template-body file:///home/testuser/mytemplate.json</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>描述并列出堆栈</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">aws cloudformation list-stacks</span><br><span class="line">aws cloudformation describe-stacks</span><br></pre></td></tr></table></figure>
+
+<p>使用 aws cloudformation list-stacks 命令可以获取已创建的任何堆栈的列表 (甚至包括已在90天内删除的堆栈)。可以使用选项按堆栈状态 (如 CREATE_COMPLETE 和 DELETE_COMPLETE) 筛选结果</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE</span><br></pre></td></tr></table></figure>
+
+<p>aws cloudformation describe-stacks 命令提供正在运行的堆栈的相关信息。可以使用选项按堆栈名称筛选结果</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">aws cloudformation describe-stacks --stack-name myteststack</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>列出资源</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">aws cloudformation list-stack-resources --stack-name myteststack</span><br></pre></td></tr></table></figure>
+
+<p>列出资源, 该命令将列出您使用 –stack-name 参数指定的堆栈中的每个资源的汇总信息<br>注：aws cloudformation describe-stack-resources 命令可返回90天内删除的堆栈的信息</p>
+<ul>
+<li>检索模板</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">aws cloudformation get-template --stack-name myteststack</span><br></pre></td></tr></table></figure>
+
+<p>模板存储为堆栈的一部分,可返回90天内删除的模板信息</p>
+<p>-验证模板</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">aws cloudformation validate-template</span><br></pre></td></tr></table></figure>
+
+<p>检查您的模板文件是否存在语法错误<br>在验证期间，首先检查模板是否是有效的 JSON。如果不是，AWS CloudFormation 会检查模板是否是有效的 YAML。如果两种检查都失败，AWS CloudFormation 会返回模板验证错误。您可以使用 –template-body 参数在本地验证模板，也可以使用 –template-url 参数进行远程验证</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">aws cloudformation validate-template --template-url https://s3.amazonaws.com/cloudformation-templates-us-east-1/S3_Bucket.template</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>删除堆栈</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">aws cloudformation delete-stack --stack-name myteststack</span><br></pre></td></tr></table></figure>
+
+<h4 id="堆栈更新"><a href="#堆栈更新" class="headerlink" title="堆栈更新"></a>堆栈更新</h4><p>CloudFormation 会对比提交的内容与堆栈当前模板来更新资源。未更改的资源在更新过程中不中断。对于更新后的资源，CloudFormation 可能使用下列更新行为：</p>
+<ul>
+<li>Update with No Interruption</li>
+</ul>
+<p>CloudFormation 在更新资源时不中断该资源，同时不改变资源物理 ID。例如：更新AWS::CloudTrail::Trail将不会打断资源运行</p>
+<ul>
+<li>Updates with Some Interruption</li>
+</ul>
+<p>CloudFormation 更新资源时会中断，并且保留物理 ID。例如对 AWS::EC2::Instance 资源更新特定属性，则在 CloudFormation 和 EC2 重新配置实例期间，该实例可能会中断。</p>
+<ul>
+<li>Replacement<br>CloudFormation 在更新过程中重新创建资源，这还会生成新的物理 ID。CloudFormation 会先创建替换资源，将其他相关资源的引用变为指向替换资源，然后删除旧资源。例如，如果更新 AWS::RDS::DBInstance 资源类型的 Engine 属性，则 AWS CloudFormation 会创建新资源并将当前数据库实例资源替换为新资源。</li>
+</ul>
+<p>CloudFormation 使用的更新行为取决于要更新的资源属性。 <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-template-resource-type-ref.html" target="_blank" rel="noopener">AWS Resource Types Reference</a> 介绍了每个属性的更新行为。</p>
+<h5 id="使用更改集更新堆栈"><a href="#使用更改集更新堆栈" class="headerlink" title="使用更改集更新堆栈"></a>使用更改集更新堆栈</h5><p>使用更改集可以预览更改对正在运行的资源造成什么影响，例如，无论更改是否会删除或替换任何关键资源，只有在决定执行更改集时，CloudFormation 才会对堆栈进行更改，这样可以决定是否继续执行更改，还是通过创建另一个更改集来探索其他更改。</p>
+<p>how to use change set to update a stack:<br><img src="/2019/11/07/cloudFormation/56C876CF-CF0B-458E-9F4D-5E604F746D6F.png" alt></p>
+<p>1.通过为堆栈提交更改来创建更改集。您可以提交修改后的stack template或者修改后的输入参数值。CloudFormation 将堆栈与所提交更改进行对比，生成更改集；此时不会更改堆栈。</p>
+<p>2.查看更改集以了解将更改哪些堆栈设置和资源。例如，可以查看CloudFormation 将添加、修改或删除哪些资源。</p>
+<p>3.可选：如果想在决定更改之前考虑其他更改，请创建其他的更改集。创建多个更改集可了解和评估不同的更改对资源会造成什么影响，可以根据需要创建任意数量的更改集。</p>
+<p>4.执行希望应用到堆栈的更改集。CloudFormation 使用这些更改更新您的堆栈。</p>
+<p>注：执行更改后，CloudFormation 将删除与堆栈关联的所有更改集</p>
+<ul>
+<li>创建更改集</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">aws cloudformation create-change-set</span><br></pre></td></tr></table></figure>
+
+<p>指定新参数值和/或修改后的模板。以下命令为 SampleChangeSet 堆栈创建名为 SampleStack 的更改集。更改集使用当前堆栈的模板，但 Purpose 参数具有不同值：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">aws cloudformation create-change-set --stack-name arn:aws:cloudformation:us-east-1:123456789012:stack/SampleStack/1a2345b6-0000-00a0-a123-00abc0abc000</span><br><span class="line">--change-set-name SampleChangeSet --use-previous-template --parameters ParameterKey=<span class="string">"InstanceType"</span>,UsePreviousValue=<span class="literal">true</span> ParameterKey=<span class="string">"KeyPairName"</span>,UsePreviousValue=<span class="literal">true</span> ParameterKey=<span class="string">"Purpose"</span>,ParameterValue=<span class="string">"production"</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>查看更改集</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">aws cloudformation list-change-sets --stack-name arn:aws:cloudformation:us-east-1:123456789012:stack/SampleStack/1a2345b6-0000-00a0-a123-00abc0abc000</span><br><span class="line">(stack id)</span><br><span class="line"></span><br><span class="line">aws cloudformation describe-change-set --change-set-name arn:aws:cloudformation:us-east-1:123456789012:changeSet/SampleChangeSet/1a2345b6-0000-00a0-a123-00abc0abc000</span><br><span class="line">(change <span class="built_in">set</span> id)</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>执行更改集 (change set id)</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">aws cloudformation execute-change-set --change-set-name arn:aws:cloudformation:us-east-1:123456789012:changeSet/SampleChangeSet/1a2345b6-0000-00a0-a123-00abc0abc000</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>删除更改集 (change set id)</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">aws cloudformation delete-change-set --change-set-name arn:aws:cloudformation:us-east-1:123456789012:changeSet/SampleChangeSet/1a2345b6-0000-00a0-a123-00abc0abc000</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>直接更新堆栈</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">aws cloudformation update-stack --stack-name mystack --template-url https://s3.amazonaws.com/sample/updated.template</span><br></pre></td></tr></table></figure>
+
+<h4 id="运行"><a href="#运行" class="headerlink" title="运行"></a>运行</h4><p>当创建堆栈时，CloudFormation 对 AWS 基础服务调用配置资源。CloudFormation 只能执行有执行权限的操作。例如，要使用 CloudFormation 创建 EC2 实例，需要具有创建实例的权限。可以使用 Identity and Access Management (IAM) 管理权限。</p>
+<p>CloudFormation 进行的调用全部由模板声明</p>
+<p><img src="/2019/11/07/cloudFormation/BA8B245C-410A-4657-B803-48EB29A2EAE8.png" alt></p>
+<ul>
+<li>更改集更新堆栈</li>
+</ul>
+<p>更新堆栈的资源，不需要创建新堆栈和删除旧堆栈</p>
+<p><img src="/2019/11/07/cloudFormation/EB5E28F6-D3B2-4CB4-9484-6F7D06074D34.png" alt></p>
+<p>注：更改集并不指示堆栈更新是否会成功。例如，更改集不检查是否将超出账户限制、是否将更新不支持更新的资源或者权限不足而无法修改资源，这些都将导致堆栈更新失败。</p>
+<ul>
+<li>删除堆栈</li>
+</ul>
+<p>在删除堆栈时，可指定要删除的堆栈，CloudFormation 将删除该堆栈及其包含的所有资源<br>若要删除一个堆栈但保留该堆栈中的一些资源，可使用删除策略来保留那些资源</p>
+<h4 id="设置"><a href="#设置" class="headerlink" title="设置"></a>设置</h4><ul>
+<li>使用 IAM 控制访问</li>
+</ul>
+<p>可以创建 IAM 用户以控制谁有权访问 AWS 账户中的哪些资源。可以将 IAM 与 CloudFormation 结合以控制用户使用 CloudFormation 执行操作，例如，是否可以查看堆栈模板、创建堆栈或删除堆栈。</p>
+<p>When you create a group or an IAM user in your AWS account, you can associate an IAM policy with that group or user, which specifies the permissions that you want to grant. </p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"Version"</span>:<span class="string">"2012-10-17"</span>,</span><br><span class="line">    <span class="attr">"Statement"</span>:[&#123;</span><br><span class="line">        <span class="attr">"Effect"</span>:<span class="string">"Allow"</span>,</span><br><span class="line">        <span class="attr">"Action"</span>:[</span><br><span class="line">            <span class="string">"cloudformation:DescribeStacks"</span>,</span><br><span class="line">            <span class="string">"cloudformation:DescribeStackEvents"</span>,</span><br><span class="line">            <span class="string">"cloudformation:DescribeStackResource"</span>,</span><br><span class="line">            <span class="string">"cloudformation:DescribeStackResources"</span></span><br><span class="line">        ],</span><br><span class="line">        <span class="attr">"Resource"</span>:<span class="string">"*"</span></span><br><span class="line">    &#125;]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p> 注：If you don’t specify a stack name or ID in your statement, you must also grant the permission to use all resources for the action using the * wildcard for the Resource element.</p>
+<ul>
+<li>CloudFormation 资源</li>
+</ul>
+<p>CloudFormation 支持资源级权限，因此可以指定针对特定堆栈的操作。如拒绝MyProductionStack 的删除和更新堆栈操作的策略示例</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"Version"</span>:<span class="string">"2012-10-17"</span>,</span><br><span class="line">    <span class="attr">"Statement"</span>:[&#123;</span><br><span class="line">        <span class="attr">"Effect"</span>:<span class="string">"Deny"</span>,</span><br><span class="line">        <span class="attr">"Action"</span>:[</span><br><span class="line">            <span class="string">"cloudformation:DeleteStack"</span>,</span><br><span class="line">            <span class="string">"cloudformation:UpdateStack"</span></span><br><span class="line">        ],</span><br><span class="line">        <span class="attr">"Resource"</span>:<span class="string">"arn:aws:cloudformation:us-east-1:123456789012:stack/MyProductionStack/*"</span></span><br><span class="line">    &#125;]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>CloudFormation 条件</li>
+</ul>
+<p>可以指定控制策略何时生效</p>
+<p>AWS::*<br>指定所有 AWS 资源。</p>
+<p>AWS::service_name::*<br>指定用于特定 AWS 服务的所有资源。</p>
+<p>AWS::service_name::resource_type<br>指定特定的 AWS 资源类型，如 AWS::EC2::Instance (所有 EC2 实例)。</p>
+<p>Custom::*<br>指定所有自定义资源。</p>
+<p>Custom::resource_type<br>指定特定的自定义资源类型 (在模板中定义)。</p>
+<p>cloudformation:RoleARN<br>Use this condition to control which service role IAM users can use when they work with stacks or change sets.</p>
+<p>cloudformation:StackPolicyUrl<br>在创建或更新堆栈操作期间，使用此条件控制 IAM 用户可将哪些堆栈policy关联到堆栈 。</p>
+<p>cloudformation:TemplateUrl<br>与策略关联的 S3 模板 URL。使用此条件控制 IAM 用户在创建或更新堆栈时可以使用的模板。</p>
+<p>示例中用户只能使用 <a href="https://s3.amazonaws.com/testbucket/test.template" target="_blank" rel="noopener">https://s3.amazonaws.com/testbucket/test.template</a> 模板 URL 创建或更新堆栈。</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">"Version"</span>:<span class="string">"2012-10-17"</span>,</span><br><span class="line">  <span class="attr">"Statement"</span>:[</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="attr">"Effect"</span> : <span class="string">"Allow"</span>,</span><br><span class="line">      <span class="attr">"Action"</span> : [ </span><br><span class="line">      <span class="string">"cloudformation:CreateStack"</span>,</span><br><span class="line">      <span class="string">"cloudformation:UpdateStack"</span> ],</span><br><span class="line">      <span class="attr">"Resource"</span> : <span class="string">"*"</span>,</span><br><span class="line">      <span class="attr">"Condition"</span> : &#123;</span><br><span class="line">        <span class="attr">"ForAllValues:StringEquals"</span> : &#123;</span><br><span class="line">          <span class="attr">"cloudformation:TemplateUrl"</span> : [ <span class="string">"https://s3.amazonaws.com/testbucket/test.template"</span> ]</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+            
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-link" href="/tags/常用命令/">常用命令</a>
+
+            </div>
+        
+        
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2019 Jinnew. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="/assets/images/header.jpg" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Jinnew</h4>
+        
+            <div id="about-card-bio"><p>一个喜欢发呆,喜欢画画,正在研究如何使用魔法，不务正业的程序员</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>Thoughtworks</p>
+
+            </div>
+        
+        
+    </div>
+</div>
+
+        
+            <div id="algolia-search-modal" class="modal-container">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="close-button"><i class="fa fa-times"></i></span>
+            <a href="https://algolia.com" target="_blank" rel="noopener" class="searchby-algolia text-color-light link-unstyled">
+                <span class="searchby-algolia-text text-color-light text-small">by</span>
+                <img class="searchby-algolia-logo" src="https://www.algolia.com/static_assets/images/press/downloads/algolia-light.svg">
+            </a>
+            <i class="search-icon fa fa-search"></i>
+            <form id="algolia-search-form">
+                <input type="text" id="algolia-search-input" name="search"
+                    class="form-control input--large search-input" placeholder="Search "
+                    />
+            </form>
+        </div>
+        <div class="modal-body">
+            <div class="no-result text-color-light text-center">没有找到文章</div>
+            <div class="results">
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a class="link-unstyled" href="/2019/04/12/welcome/">
+                            <img class="media-image" src="/2019/04/12/welcome/thumb.jpg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a class="link-unstyled" href="/2019/04/12/welcome/">
+                            <h3 class="media-heading">没有知识的荒原</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    2019年4月12日
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>真的</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a class="link-unstyled" href="/2019/10/09/docker/">
+                            <img class="media-image" src="/2019/10/09/docker/docker.png" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a class="link-unstyled" href="/2019/10/09/docker/">
+                            <h3 class="media-heading">docker 基本概念与命令</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    2019年10月9日
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>docker / docker-compose 相关概念及常用命令</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a class="link-unstyled" href="/2019/10/10/git/">
+                            <img class="media-image" src="/2019/10/10/git/two-branches.png" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a class="link-unstyled" href="/2019/10/10/git/">
+                            <h3 class="media-heading">git常见命令</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    2019年10月10日
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>git基本使用流程：   </p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a class="link-unstyled" href="/2019/10/10/linux/">
+                            <img class="media-image" src="/2019/10/10/linux/file.png" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a class="link-unstyled" href="/2019/10/10/linux/">
+                            <h3 class="media-heading">linux常用命令</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    2019年10月10日
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>man 命令名    #查看命令的详细说明<br>命令名 -help   #查看命令的常用选项</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a class="link-unstyled" href="/2019/11/07/cloudFormation/">
+                            <img class="media-image" src="/2019/11/07/cloudFormation/docker.png" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a class="link-unstyled" href="/2019/11/07/cloudFormation/">
+                            <h3 class="media-heading">cloudFormation</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    2019年11月7日
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><h4 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h4></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+            </div>
+        </div>
+        <div class="modal-footer">
+            <p class="results-count text-medium"
+                data-message-zero="没有找到文章"
+                data-message-one="找到 1 篇文章"
+                data-message-other="找到 {n} 篇文章">
+                找到 5 篇文章
+            </p>
+        </div>
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('/assets/images/cover.jpg');"></div>
+        <!--SCRIPTS-->
+<script src="/assets/js/script-dbd16rvloemmuxdzniplmnxxvwoz24eya9wol0b7vvmlokgqsjivmb8dnscy.min.js"></script>
+<!--SCRIPTS END-->
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.14.1/moment-with-locales.min.js"></script>
+    <script src="//cdn.jsdelivr.net/algoliasearch/3/algoliasearch.min.js"></script>
+    <script>
+        var algoliaClient = algoliasearch('OWQ2XQJ4T9', '3d1a1fe1e9b55c5ae30de44db20886bc');
+        var algoliaIndex = algoliaClient.initIndex('hexoSearch');
+    </script>
+
+
+    </body>
+</html>
