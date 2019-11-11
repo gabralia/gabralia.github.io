@@ -1,0 +1,643 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="蜻蜓队长前来觐见">
+    <title>OAuth2.0 - 蜻蜓队长前来觐见</title>
+    <meta name="author" content="Jinnew">
+    
+    
+    
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Jinnew","sameAs":["https://github.com/gabralia","/#about"],"image":"header.jpg"},"articleBody":"信任问题在OAuth2.0中，简单来说有三方：用户（指属于服务方的用户）、服务方（如微信、微博等）、第三方应用\n\n\n服务方不信任用户，所以需要用户提供密码或其他可信凭据服务方不信任第三方应用，所以需要第三方提供自己交给它的凭据（如微信授权的code,AppID等）用户部分信任第三方应用，所以用户愿意把自已在服务方里的某些服务交给第三方使用，但不愿意把自己在服务方的密码等交给第三方应用\n角色\nresource ownerAn entity capable of granting access to a protected resource. When the resource owner is a person, it is referred to as an end-user.\n\nresource serverThe server hosting the protected resources, capable of accepting and responding to protected resource requests using access tokens.\n\nclient (代表resource owner发出请求的第三方应用平台)An application making protected resource requests on behalf of the resource owner and with its authorization.  The term “client” does not imply any particular implementation characteristics (e.g., whether the application executes on a server, a desktop, or other devices).\n\nauthorization server（提供登录服务的服务器）The server issuing access tokens to the client after successfully authenticating the resource owner and obtaining authorization.在成功验证资源所有者并获得授权后向客户端颁发访问令牌的服务器\n\n\n协议流程 （Protocol Flow）1234567891011121314151617+--------+                               +---------------+|        |--(A)- Authorization Request -&gt;|   Resource    ||        |                               |     Owner     ||        |&lt;-(B)-- Authorization Grant ---|               ||        |                               +---------------+|        ||        |                               +---------------+|        |--(C)-- Authorization Grant --&gt;| Authorization || Client |                               |     Server    ||        |&lt;-(D)----- Access Token -------|               ||        |                               +---------------+|        ||        |                               +---------------+|        |--(E)----- Access Token ------&gt;|    Resource   ||        |                               |     Server    ||        |&lt;-(F)--- Protected Resource ---|               |+--------+                               +---------------+\n\nA. Authorization Request， 第三方请求用户授权B. Authorization Grant，用户同意授权后，会从服务方获取一次性用户授权凭据(如code码)给第三方C. Authorization Grant，第三方会把授权凭据以及服务方给它的的身份凭据(如AppId)一起交给服务方的向认证服务器申请访问令牌D. Access Token，认证服务器核对授权凭据等信息，确认无误后，向第三方发送访问令牌Access Token等信息E. Access Token，通过这个Access Token向Resource Server索要数据F. Protected Resource，资源服务器使用令牌向认证服务器确认令牌的正确性，确认无误后提供资源\n授权方式客户端必须得到用户的授权（authorization grant），才能获得令牌（access token）。OAuth 2.0定义了四种授权方式：\n\n授权码模式（authorization code）\n简化模式（implicit）\n密码模式（resource owner password credentials）\n客户端模式（client credentials）\n\n授权码模式\n\n用户访问客户端，后者将前者导向认证服务器\n用户选择是否给予客户端授权\n假设用户给予授权，认证服务器将用户导向客户端事先指定的重定向URI，同时附上一个授权码\n客户端收到授权码，附上早先的重定向URI，向认证服务器申请令牌。这一步是在客户端的后台的服务器上完成的，对用户不可见\n认证服务器核对了授权码和重定向URI，确认无误后，向客户端发送访问令牌（access token）和更新令牌（refresh token）等\n\neg:\n所需参数步骤1: 客户端申请认证的URI包含以下参数：\n\nresponse_type：表示授权类型，必选项，此处的值固定为”code”\nclient_id：表示客户端的ID，必选项。（如微信授权登录，此ID是APPID）\nredirect_uri：表示重定向URI，可选项 (获得code后跳转哪里)\nscope：表示申请的权限范围，可选项 state：表示客户端的当前状态，可以指定任意值，认证服务器会原封不动地返回这个值\nstate：表示客户端的当前状态，可以指定任意值，认证服务器会原封不动地返回这个值。\n\n123GET /authorize?response_type=code&amp;client_id=s6BhdRkqt3&amp;state=xyz        &amp;redirect_uri=https%3A%2F%2Fclient%2Eexample%2Ecom%2Fcb HTTP/1.1HTTP/1.1 Host: server.example.com\n\n对比网站应用微信登录：请求CODE\n1https://open.weixin.qq.com/connect/qrconnect?appid=APPID&amp;redirect_uri=REDIRECT_URI&amp;response_type=code&amp;scope=SCOPE&amp;state=STATE#wechat_redirect\n\n步骤3： 认证服务器回应客户端的URI包含以下参数：\n\ncode：表示授权码，必选项。该码的有效期应该很短，通常设为10分钟，客户端只能使用该码一次，否则会被授权服务器拒绝。该码与客户端ID和重定向URI，是一一对应关系。\nstate：如果客户端的请求中包含这个参数，认证服务器的回应也必须一模一样包含这个参数。\n\n123HTTP/1.1 302 FoundLocation: https://client.example.com/cb?code=SplxlOBeZQQYbYS6WxSbIA          &amp;state=xyz\n\n步骤4：客户端向认证服务器申请令牌的HTTP请求包含以下参数：\n\ngrant_type：表示使用的授权模式，必选项，此处的值固定为”authorization_code”。\ncode：表示上一步获得的授权码，必选项。\nredirect_uri：表示重定向URI，必选项，且必须与A步骤中的该参数值保持一致。\nclient_id：表示客户端ID，必选项。\nclient_secret：客户端密钥\n\n12345678POST /token HTTP/1.1Host: server.example.comAuthorization: Basic czZCaGRSa3F0MzpnWDFmQmF0M2JWContent-Type: application/x-www-form-urlencodedgrant_type=authorization_code&amp;code=SplxlOBeZQQYbYS6WxSbIA&amp;redirect_uri=https%3A%2F%2Fclient%2Eexample%2Ecom%2Fcb&amp;client_id=s6BhdRkqt3&amp;client_secret=dhjk33878hdfhss\n\n对比网站应用微信登录：通过code获取access_token\n1https://api.weixin.qq.com/sns/oauth2/access_token?appid=APPID&amp;secret=SECRET&amp;code=CODE&amp;grant_type=authorization_code\n\n步骤5：认证服务器发送的HTTP回复包含以下参数：\n\naccess_token：表示访问令牌，必选项。\ntoken_type：表示令牌类型，该值大小写不敏感，必选项，可以是bearer类型或mac类型。\nexpires_in：表示过期时间，单位为秒。如果省略该参数，必须其他方式设置过期时间。\nrefresh_token：表示更新令牌，用来获取下一次的访问令牌，可选项。\nscope：表示权限范围，如果与客户端申请的范围一致，此项可省略。\n\n123456789101112HTTP/1.1 200 OKContent-Type: application/json;charset=UTF-8Cache-Control: no-storePragma: no-cache&#123;  &quot;access_token&quot;:&quot;2YotnFZFEjr1zCsicMWpAA&quot;,  &quot;token_type&quot;:&quot;example&quot;,  &quot;expires_in&quot;:3600,  &quot;refresh_token&quot;:&quot;tGzv3JOkF0XG5Qx2TlKWIA&quot;,  &quot;example_parameter&quot;:&quot;example_value&quot;&#125;\n\n更新令牌 （refresh token）如果用户访问的时候，客户端的访问令牌access_token已经过期，则需要使用更新令牌refresh_token申请一个新的访问令牌。客户端发出更新令牌的HTTP请求，包含以下参数：\n\ngrant_type：表示使用的授权模式，此处的值固定为”refreshtoken”，必选项。\nrefresh_token：表示早前收到的更新令牌，必选项。\nscope：表示申请的授权范围，不可以超出上一次申请的范围，如果省略，表示与上一次一致。\n\n123456POST /token HTTP/1.1Host: server.example.comAuthorization: Basic czZCaGRSa3F0MzpnWDFmQmF0M2JWContent-Type: application/x-www-form-urlencodedgrant_type=refresh_token&amp;refresh_token=tGzv3JOkF0XG5Qx2TlKWIA\n\n简化模式简化模式（implicit grant type）不通过第三方应用程序的服务器，直接在浏览器中向认证服务器申请令牌，跳过了”授权码”这个步骤。所有步骤在浏览器中完成，令牌对访问者是可见的，且客户端不需要认证。\n123456789101112131415+----------+            Client Id           +---------------+|          +----(A)-- &amp; Redirect URI ------&gt;|               ||User-Agent|                                | Authorization ||    in    |----(B)-- User authenticate ---&gt;|     Server    ||  Broswer |                                |               ||          |&lt;---(C)--- Redirect URI --------|               ||          |         with Access Token      +---------------+|          |            in Fragment|          |                                +---------------+|          |----(D)--- Redirect URI -------&gt;|   Web-Server  ||          |          without Fragment      |     with      ||   (F)    |                                |     Client    ||  Access  |&lt;---(E)------- Script ----------|     Resource  ||   Token  |                                +---------------++----------+\n\n(C) 重定向URI会在URI片断中包含访问令牌注：URI Fragment是指URI中#号之后的内容包含以下参数：\n\naccess_token：表示访问令牌，必选项。\ntoken_type：表示令牌类型，该值大小写不敏感，必选项。\nexpires_in：表示过期时间，单位为秒。如果省略该参数，必须其他方式设置过期时间。\nscope：表示权限范围，如果与客户端申请的范围一致，此项可省略。\nstate：如果客户端的请求中包含这个参数，认证服务器的回应也必须一模一样包含这个参数。\n\n123HTTP/1.1 302 FoundLocation: http://example.com/cb#access_token=2YotnFZFEjr1zCsicMWpAA               &amp;state=xyz&amp;token_type=example&amp;expires_in=3600\n\n(D) 向web服务器发送不包含URI片断的请求。user-agent在本地保存URI片断\n(E) web服务器返回一个web页面（通常是嵌入了脚本的HTML网页），这个页面能够访问完整的重定向URI，它包含了由user-agent保存的URI片断，同时这个页面能够将包含在URI片断中的访问令牌（和其它参数）提取出来。\n(F) user-agent在本地执行由web服务器提供的脚本，该脚本提取出访问令牌并将它传递给第三方应用平台（client）\n密码模式密码模式就是将密码托管给第三方App，但是必须要保证第三方App高度可信。\n1234567891011121314151617+----------+| Resource ||  Owner   ||          |+----------+  |  |    Resource Owner (A) Password Credentials  |  v+---------+                                  +---------------+|         |---(B)---- Resource Owner -------&gt;|               ||         |         Password Credentials     | Authorization || Client  |                                  |     Server    ||         |&lt;--(C)---- Access Token ----------|               ||         |    (w/ Optional Refresh Token)   |               |+---------+                                  +---------------+\n\n(A) 用户向客户端提供用户名和密码。\n(B) 客户端将用户名和密码发给认证服务器，向后者请求令牌。包含以下参数：\n\ngrant_type：表示授权类型，此处的值固定为”password”，必选项。\nusername：表示用户名，必选项。\npassword：表示用户的密码，必选项。\nscope：表示权限范围，可选项。\n\n123456POST /token HTTP/1.1Host: server.example.comAuthorization: Basic czZCaGRSa3F0MzpnWDFmQmF0M2JWContent-Type: application/x-www-form-urlencodedgrant_type=password&amp;username=johndoe&amp;password=A3ddj3w\n\n(C) 认证服务器确认无误后，向客户端提供访问令牌。\n客户端模式客户端模式（Client Credentials Grant）指客户端以自己的名义，而不是以用户的名义，向”服务提供商”进行认证。严格地说，客户端模式并不属于OAuth框架所要解决的问题。在这种模式中，用户直接向客户端注册，客户端以自己的名义要求”服务提供商”提供服务，其实不存在授权问题。\n1234567+---------+                                  +---------------+|         |                                  |               ||         |---(A)- Client Authentication ---&gt;| Authorization || Client  |                                  |     Server    ||         |&lt;--(B)---- Access Token ----------|               ||         |                                  |               |+---------+                                  +---------------+\n\n(A) 客户端向认证服务器进行身份认证，并要求一个访问令牌。包含以下参数：\n\ngranttype：表示授权类型，此处的值固定为”clientcredentials”，必选项。\nscope：表示权限范围，可选项。\n\n123456POST /token HTTP/1.1Host: server.example.comAuthorization: Basic czZCaGRSa3F0MzpnWDFmQmF0M2JWContent-Type: application/x-www-form-urlencodedgrant_type=client_credentials\n\n(B) 认证服务器确认无误后，向客户端提供访问令牌。\n参考The OAuth 2.0 Authorization Framework\n理解OAuth2.0认证与客户端授权码模式详解\n理解OAuth 2.0\n","dateCreated":"2019-11-12T00:39:07+08:00","dateModified":"2019-11-12T00:50:05+08:00","datePublished":"2019-11-12T00:39:07+08:00","description":"信任问题在OAuth2.0中，简单来说有三方：用户（指属于服务方的用户）、服务方（如微信、微博等）、第三方应用","headline":"OAuth2.0","image":["A07FDDD8-8B95-474B-9C79-6315F52636F1.png","cover.png"],"mainEntityOfPage":{"@type":"WebPage","@id":"/2019/11/12/OAuth2-0/"},"publisher":{"@type":"Organization","name":"Jinnew","sameAs":["https://github.com/gabralia","/#about"],"image":"header.jpg","logo":{"@type":"ImageObject","url":"header.jpg"}},"url":"/2019/11/12/OAuth2-0/","keywords":"OAuth","thumbnailUrl":"A07FDDD8-8B95-474B-9C79-6315F52636F1.png"}</script>
+    <meta name="description" content="信任问题在OAuth2.0中，简单来说有三方：用户（指属于服务方的用户）、服务方（如微信、微博等）、第三方应用">
+<meta name="keywords" content="OAuth">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="OAuth2.0">
+<meta property="og:url" content="/2019/11/12/OAuth2-0/index.html">
+<meta property="og:site_name" content="蜻蜓队长前来觐见">
+<meta property="og:description" content="信任问题在OAuth2.0中，简单来说有三方：用户（指属于服务方的用户）、服务方（如微信、微博等）、第三方应用">
+<meta property="og:locale" content="zh-cn">
+<meta property="og:image" content="/2019/11/12/OAuth2-0/A07FDDD8-8B95-474B-9C79-6315F52636F1.png">
+<meta property="og:image" content="/2019/11/12/OAuth2-0/11573486684_.pic.jpg">
+<meta property="og:updated_time" content="2019-11-11T16:50:05.814Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="OAuth2.0">
+<meta name="twitter:description" content="信任问题在OAuth2.0中，简单来说有三方：用户（指属于服务方的用户）、服务方（如微信、微博等）、第三方应用">
+<meta name="twitter:image" content="/2019/11/12/OAuth2-0/A07FDDD8-8B95-474B-9C79-6315F52636F1.png">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="/assets/images/header.jpg"/>
+    
+    
+        <meta property="og:image" content="/2019/11/12/OAuth2-0/A07FDDD8-8B95-474B-9C79-6315F52636F1.png"/>
+        <meta class="swiftype" name="image" data-type="enum" content="/2019/11/12/OAuth2-0/A07FDDD8-8B95-474B-9C79-6315F52636F1.png" />
+    
+    
+        <meta property="og:image" content="/2019/11/12/OAuth2-0/cover.png"/>
+        <meta class="swiftype" name="image" data-type="enum" content="/2019/11/12/OAuth2-0/cover.png" />
+    
+    
+    <!--STYLES-->
+    <link rel="stylesheet" href="/assets/css/style-c4ozcsklz4kht2pebhp44xorvyverh23toayhn7i6ubrpyedak24hv1v0hyd.min.css">
+    <!--STYLES END-->
+    
+
+    
+</head>
+
+    <body>
+        <div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a class="header-title-link" href="/ ">蜻蜓队长前来觐见</a>
+    </div>
+    
+        
+            <a  class="header-right-picture "
+                href="#about">
+        
+        
+            <img class="header-picture" src="/assets/images/header.jpg" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a href="/#about">
+                    <img class="sidebar-profile-picture" src="/assets/images/header.jpg" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Jinnew</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>You guess who I am.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/ "
+                            
+                            title="首页"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-categories"
+                            
+                            title="分类"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-bookmark" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">分类</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-tags"
+                            
+                            title="标签"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-archives"
+                            
+                            title="归档"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link open-algolia-search"
+                             href="#search"
+                            
+                            title="搜索"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-search" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">搜索</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="https://github.com/gabralia"
+                            title="GitHub"
+                        >
+                    
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="#about"
+                            
+                            title="关于"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/atom.xml"
+                            
+                            title="RSS"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+        <div class="post-header-cover
+                    text-center
+                    post-header-cover--partial"
+             style="background-image:url('/2019/11/12/OAuth2-0/cover.png');"
+             data-behavior="4">
+            
+                <div class="post-header main-content-wrap text-center">
+    
+        <h1 class="post-title">
+            OAuth2.0
+        </h1>
+    
+    
+</div>
+
+            
+        </div>
+
+            <div id="main" data-behavior="4"
+                 class="hasCover
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <h3 id="信任问题"><a href="#信任问题" class="headerlink" title="信任问题"></a>信任问题</h3><p>在OAuth2.0中，简单来说有三方：用户（指属于服务方的用户）、服务方（如微信、微博等）、第三方应用</p>
+<a id="more"></a>
+
+<p>服务方不信任用户，所以需要用户提供密码或其他可信凭据<br>服务方不信任第三方应用，所以需要第三方提供自己交给它的凭据（如微信授权的code,AppID等）<br>用户部分信任第三方应用，所以用户愿意把自已在服务方里的某些服务交给第三方使用，但不愿意把自己在服务方的密码等交给第三方应用</p>
+<h3 id="角色"><a href="#角色" class="headerlink" title="角色"></a>角色</h3><ul>
+<li><p>resource owner<br>An entity capable of granting access to a protected resource. When the resource owner is a person, it is referred to as an end-user.</p>
+</li>
+<li><p>resource server<br>The server hosting the protected resources, capable of accepting and responding to protected resource requests using access tokens.</p>
+</li>
+<li><p>client (代表resource owner发出请求的第三方应用平台)<br>An application making protected resource requests on behalf of the resource owner and with its authorization.  The term “client” does not imply any particular implementation characteristics (e.g., whether the application executes on a server, a desktop, or other devices).</p>
+</li>
+<li><p>authorization server（提供登录服务的服务器）<br>The server issuing access tokens to the client after successfully authenticating the resource owner and obtaining authorization.<br>在成功验证资源所有者并获得授权后向客户端颁发访问令牌的服务器</p>
+</li>
+</ul>
+<h3 id="协议流程-（Protocol-Flow）"><a href="#协议流程-（Protocol-Flow）" class="headerlink" title="协议流程 （Protocol Flow）"></a>协议流程 （Protocol Flow）</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">+--------+                               +---------------+</span><br><span class="line">|        |--(A)- Authorization Request -&gt;|   Resource    |</span><br><span class="line">|        |                               |     Owner     |</span><br><span class="line">|        |&lt;-(B)-- Authorization Grant ---|               |</span><br><span class="line">|        |                               +---------------+</span><br><span class="line">|        |</span><br><span class="line">|        |                               +---------------+</span><br><span class="line">|        |--(C)-- Authorization Grant --&gt;| Authorization |</span><br><span class="line">| Client |                               |     Server    |</span><br><span class="line">|        |&lt;-(D)----- Access Token -------|               |</span><br><span class="line">|        |                               +---------------+</span><br><span class="line">|        |</span><br><span class="line">|        |                               +---------------+</span><br><span class="line">|        |--(E)----- Access Token ------&gt;|    Resource   |</span><br><span class="line">|        |                               |     Server    |</span><br><span class="line">|        |&lt;-(F)--- Protected Resource ---|               |</span><br><span class="line">+--------+                               +---------------+</span><br></pre></td></tr></table></figure>
+
+<p>A. <code>Authorization Request</code>， 第三方请求用户授权<br>B. <code>Authorization Grant</code>，用户同意授权后，会从服务方获取一次性用户授权凭据(如code码)给第三方<br>C. <code>Authorization Grant</code>，第三方会把授权凭据以及服务方给它的的身份凭据(如AppId)一起交给服务方的向认证服务器申请访问令牌<br>D. <code>Access Token</code>，认证服务器核对授权凭据等信息，确认无误后，向第三方发送访问令牌Access Token等信息<br>E. <code>Access Token</code>，通过这个Access Token向Resource Server索要数据<br>F. <code>Protected Resource</code>，资源服务器使用令牌向认证服务器确认令牌的正确性，确认无误后提供资源</p>
+<h3 id="授权方式"><a href="#授权方式" class="headerlink" title="授权方式"></a>授权方式</h3><p>客户端必须得到用户的授权（authorization grant），才能获得令牌（access token）。OAuth 2.0定义了四种授权方式：</p>
+<ul>
+<li>授权码模式（authorization code）</li>
+<li>简化模式（implicit）</li>
+<li>密码模式（resource owner password credentials）</li>
+<li>客户端模式（client credentials）</li>
+</ul>
+<h4 id="授权码模式"><a href="#授权码模式" class="headerlink" title="授权码模式"></a>授权码模式</h4><p><img src="/2019/11/12/OAuth2-0/A07FDDD8-8B95-474B-9C79-6315F52636F1.png" alt></p>
+<ol>
+<li>用户访问客户端，后者将前者导向认证服务器</li>
+<li>用户选择是否给予客户端授权</li>
+<li>假设用户给予授权，认证服务器将用户导向客户端事先指定的重定向URI，同时附上一个授权码</li>
+<li>客户端收到授权码，附上早先的重定向URI，向认证服务器申请令牌。这一步是在客户端的后台的服务器上完成的，对用户不可见</li>
+<li>认证服务器核对了授权码和重定向URI，确认无误后，向客户端发送访问令牌（access token）和更新令牌（refresh token）等</li>
+</ol>
+<p>eg:<br><img src="/2019/11/12/OAuth2-0/11573486684_.pic.jpg" alt></p>
+<h5 id="所需参数"><a href="#所需参数" class="headerlink" title="所需参数"></a>所需参数</h5><p>步骤1: 客户端申请认证的URI<br>包含以下参数：</p>
+<ul>
+<li>response_type：表示授权类型，必选项，此处的值固定为”code”</li>
+<li>client_id：表示客户端的ID，必选项。（如微信授权登录，此ID是APPID）</li>
+<li>redirect_uri：表示重定向URI，可选项 (获得code后跳转哪里)</li>
+<li>scope：表示申请的权限范围，可选项 state：表示客户端的当前状态，可以指定任意值，认证服务器会原封不动地返回这个值</li>
+<li>state：表示客户端的当前状态，可以指定任意值，认证服务器会原封不动地返回这个值。</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">GET /authorize?response_type=code&amp;client_id=s6BhdRkqt3&amp;state=xyz</span><br><span class="line">        &amp;redirect_uri=https%3A%2F%2Fclient%2Eexample%2Ecom%2Fcb HTTP/1.1</span><br><span class="line">HTTP/1.1 Host: server.example.com</span><br></pre></td></tr></table></figure>
+
+<p>对比网站应用微信登录：请求CODE</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">https://open.weixin.qq.com/connect/qrconnect?appid=APPID&amp;redirect_uri=REDIRECT_URI&amp;response_type=code&amp;scope=SCOPE&amp;state=STATE#wechat_redirect</span><br></pre></td></tr></table></figure>
+
+<p>步骤3： 认证服务器回应客户端的URI<br>包含以下参数：</p>
+<ul>
+<li>code：表示授权码，必选项。该码的有效期应该很短，通常设为10分钟，客户端只能使用该码一次，否则会被授权服务器拒绝。该码与客户端ID和重定向URI，是一一对应关系。</li>
+<li>state：如果客户端的请求中包含这个参数，认证服务器的回应也必须一模一样包含这个参数。</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">HTTP/1.1 302 Found</span><br><span class="line">Location: https://client.example.com/cb?code=SplxlOBeZQQYbYS6WxSbIA</span><br><span class="line">          &amp;state=xyz</span><br></pre></td></tr></table></figure>
+
+<p>步骤4：客户端向认证服务器申请令牌的HTTP请求<br>包含以下参数：</p>
+<ul>
+<li>grant_type：表示使用的授权模式，必选项，此处的值固定为”authorization_code”。</li>
+<li>code：表示上一步获得的授权码，必选项。</li>
+<li>redirect_uri：表示重定向URI，必选项，且必须与A步骤中的该参数值保持一致。</li>
+<li>client_id：表示客户端ID，必选项。</li>
+<li>client_secret：客户端密钥</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">POST /token HTTP/1.1</span><br><span class="line">Host: server.example.com</span><br><span class="line">Authorization: Basic czZCaGRSa3F0MzpnWDFmQmF0M2JW</span><br><span class="line">Content-Type: application/x-www-form-urlencoded</span><br><span class="line"></span><br><span class="line">grant_type=authorization_code&amp;code=SplxlOBeZQQYbYS6WxSbIA</span><br><span class="line">&amp;redirect_uri=https%3A%2F%2Fclient%2Eexample%2Ecom%2Fcb</span><br><span class="line">&amp;client_id=s6BhdRkqt3&amp;client_secret=dhjk33878hdfhss</span><br></pre></td></tr></table></figure>
+
+<p>对比网站应用微信登录：通过code获取access_token</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">https://api.weixin.qq.com/sns/oauth2/access_token?appid=APPID&amp;secret=SECRET&amp;code=CODE&amp;grant_type=authorization_code</span><br></pre></td></tr></table></figure>
+
+<p>步骤5：认证服务器发送的HTTP回复<br>包含以下参数：</p>
+<ul>
+<li>access_token：表示访问令牌，必选项。</li>
+<li>token_type：表示令牌类型，该值大小写不敏感，必选项，可以是bearer类型或mac类型。</li>
+<li>expires_in：表示过期时间，单位为秒。如果省略该参数，必须其他方式设置过期时间。</li>
+<li>refresh_token：表示更新令牌，用来获取下一次的访问令牌，可选项。</li>
+<li>scope：表示权限范围，如果与客户端申请的范围一致，此项可省略。</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">HTTP/1.1 200 OK</span><br><span class="line">Content-Type: application/json;charset=UTF-8</span><br><span class="line">Cache-Control: no-store</span><br><span class="line">Pragma: no-cache</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">  &quot;access_token&quot;:&quot;2YotnFZFEjr1zCsicMWpAA&quot;,</span><br><span class="line">  &quot;token_type&quot;:&quot;example&quot;,</span><br><span class="line">  &quot;expires_in&quot;:3600,</span><br><span class="line">  &quot;refresh_token&quot;:&quot;tGzv3JOkF0XG5Qx2TlKWIA&quot;,</span><br><span class="line">  &quot;example_parameter&quot;:&quot;example_value&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h5 id="更新令牌-（refresh-token）"><a href="#更新令牌-（refresh-token）" class="headerlink" title="更新令牌 （refresh token）"></a>更新令牌 （refresh token）</h5><p>如果用户访问的时候，客户端的访问令牌access_token已经过期，则需要使用更新令牌refresh_token申请一个新的访问令牌。<br>客户端发出更新令牌的HTTP请求，包含以下参数：</p>
+<ul>
+<li>grant_type：表示使用的授权模式，此处的值固定为”refreshtoken”，必选项。</li>
+<li>refresh_token：表示早前收到的更新令牌，必选项。</li>
+<li>scope：表示申请的授权范围，不可以超出上一次申请的范围，如果省略，表示与上一次一致。</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">POST /token HTTP/1.1</span><br><span class="line">Host: server.example.com</span><br><span class="line">Authorization: Basic czZCaGRSa3F0MzpnWDFmQmF0M2JW</span><br><span class="line">Content-Type: application/x-www-form-urlencoded</span><br><span class="line"></span><br><span class="line">grant_type=refresh_token&amp;refresh_token=tGzv3JOkF0XG5Qx2TlKWIA</span><br></pre></td></tr></table></figure>
+
+<h4 id="简化模式"><a href="#简化模式" class="headerlink" title="简化模式"></a>简化模式</h4><p>简化模式（implicit grant type）不通过第三方应用程序的服务器，直接在浏览器中向认证服务器申请令牌，跳过了”授权码”这个步骤。所有步骤在浏览器中完成，令牌对访问者是可见的，且客户端不需要认证。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">+----------+            Client Id           +---------------+</span><br><span class="line">|          +----(A)-- &amp; Redirect URI ------&gt;|               |</span><br><span class="line">|User-Agent|                                | Authorization |</span><br><span class="line">|    in    |----(B)-- User authenticate ---&gt;|     Server    |</span><br><span class="line">|  Broswer |                                |               |</span><br><span class="line">|          |&lt;---(C)--- Redirect URI --------|               |</span><br><span class="line">|          |         with Access Token      +---------------+</span><br><span class="line">|          |            in Fragment</span><br><span class="line">|          |                                +---------------+</span><br><span class="line">|          |----(D)--- Redirect URI -------&gt;|   Web-Server  |</span><br><span class="line">|          |          without Fragment      |     with      |</span><br><span class="line">|   (F)    |                                |     Client    |</span><br><span class="line">|  Access  |&lt;---(E)------- Script ----------|     Resource  |</span><br><span class="line">|   Token  |                                +---------------+</span><br><span class="line">+----------+</span><br></pre></td></tr></table></figure>
+
+<p>(C) 重定向URI会在URI片断中包含访问令牌<br>注：URI Fragment是指URI中#号之后的内容<br>包含以下参数：</p>
+<ul>
+<li>access_token：表示访问令牌，必选项。</li>
+<li>token_type：表示令牌类型，该值大小写不敏感，必选项。</li>
+<li>expires_in：表示过期时间，单位为秒。如果省略该参数，必须其他方式设置过期时间。</li>
+<li>scope：表示权限范围，如果与客户端申请的范围一致，此项可省略。</li>
+<li>state：如果客户端的请求中包含这个参数，认证服务器的回应也必须一模一样包含这个参数。</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">HTTP/1.1 302 Found</span><br><span class="line">Location: http://example.com/cb#access_token=2YotnFZFEjr1zCsicMWpAA</span><br><span class="line">               &amp;state=xyz&amp;token_type=example&amp;expires_in=3600</span><br></pre></td></tr></table></figure>
+
+<p>(D) 向web服务器发送不包含URI片断的请求。user-agent在本地保存URI片断</p>
+<p>(E) web服务器返回一个web页面（通常是嵌入了脚本的HTML网页），这个页面能够访问完整的重定向URI，它包含了由user-agent保存的URI片断，同时这个页面能够将包含在URI片断中的访问令牌（和其它参数）提取出来。</p>
+<p>(F) user-agent在本地执行由web服务器提供的脚本，该脚本提取出访问令牌并将它传递给第三方应用平台（client）</p>
+<h4 id="密码模式"><a href="#密码模式" class="headerlink" title="密码模式"></a>密码模式</h4><p>密码模式就是将密码托管给第三方App，但是必须要保证第三方App高度可信。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">+----------+</span><br><span class="line">| Resource |</span><br><span class="line">|  Owner   |</span><br><span class="line">|          |</span><br><span class="line">+----------+</span><br><span class="line">  |</span><br><span class="line">  |    Resource Owner</span><br><span class="line"> (A) Password Credentials</span><br><span class="line">  |</span><br><span class="line">  v</span><br><span class="line">+---------+                                  +---------------+</span><br><span class="line">|         |---(B)---- Resource Owner -------&gt;|               |</span><br><span class="line">|         |         Password Credentials     | Authorization |</span><br><span class="line">| Client  |                                  |     Server    |</span><br><span class="line">|         |&lt;--(C)---- Access Token ----------|               |</span><br><span class="line">|         |    (w/ Optional Refresh Token)   |               |</span><br><span class="line">+---------+                                  +---------------+</span><br></pre></td></tr></table></figure>
+
+<p>(A) 用户向客户端提供用户名和密码。</p>
+<p>(B) 客户端将用户名和密码发给认证服务器，向后者请求令牌。<br>包含以下参数：</p>
+<ul>
+<li>grant_type：表示授权类型，此处的值固定为”password”，必选项。</li>
+<li>username：表示用户名，必选项。</li>
+<li>password：表示用户的密码，必选项。</li>
+<li>scope：表示权限范围，可选项。</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">POST /token HTTP/1.1</span><br><span class="line">Host: server.example.com</span><br><span class="line">Authorization: Basic czZCaGRSa3F0MzpnWDFmQmF0M2JW</span><br><span class="line">Content-Type: application/x-www-form-urlencoded</span><br><span class="line"></span><br><span class="line">grant_type=password&amp;username=johndoe&amp;password=A3ddj3w</span><br></pre></td></tr></table></figure>
+
+<p>(C) 认证服务器确认无误后，向客户端提供访问令牌。</p>
+<h4 id="客户端模式"><a href="#客户端模式" class="headerlink" title="客户端模式"></a>客户端模式</h4><p>客户端模式（Client Credentials Grant）指客户端以自己的名义，而不是以用户的名义，向”服务提供商”进行认证。严格地说，客户端模式并不属于OAuth框架所要解决的问题。在这种模式中，用户直接向客户端注册，客户端以自己的名义要求”服务提供商”提供服务，其实不存在授权问题。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">+---------+                                  +---------------+</span><br><span class="line">|         |                                  |               |</span><br><span class="line">|         |---(A)- Client Authentication ---&gt;| Authorization |</span><br><span class="line">| Client  |                                  |     Server    |</span><br><span class="line">|         |&lt;--(B)---- Access Token ----------|               |</span><br><span class="line">|         |                                  |               |</span><br><span class="line">+---------+                                  +---------------+</span><br></pre></td></tr></table></figure>
+
+<p>(A) 客户端向认证服务器进行身份认证，并要求一个访问令牌。<br>包含以下参数：</p>
+<ul>
+<li>granttype：表示授权类型，此处的值固定为”clientcredentials”，必选项。</li>
+<li>scope：表示权限范围，可选项。</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">POST /token HTTP/1.1</span><br><span class="line">Host: server.example.com</span><br><span class="line">Authorization: Basic czZCaGRSa3F0MzpnWDFmQmF0M2JW</span><br><span class="line">Content-Type: application/x-www-form-urlencoded</span><br><span class="line"></span><br><span class="line">grant_type=client_credentials</span><br></pre></td></tr></table></figure>
+
+<p>(B) 认证服务器确认无误后，向客户端提供访问令牌。</p>
+<h3 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h3><p><a href="https://tools.ietf.org/html/rfc6749" target="_blank" rel="noopener">The OAuth 2.0 Authorization Framework</a></p>
+<p><a href="https://segmentfault.com/a/1190000010540911" target="_blank" rel="noopener">理解OAuth2.0认证与客户端授权码模式详解</a></p>
+<p><a href="https://www.ruanyifeng.com/blog/2014/05/oauth_2_0.html" target="_blank" rel="noopener">理解OAuth 2.0</a></p>
+
+            
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-link" href="/tags/OAuth/">OAuth</a>
+
+            </div>
+        
+        
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2019 Jinnew. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="/assets/images/header.jpg" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Jinnew</h4>
+        
+            <div id="about-card-bio"><p>You guess who I am.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>Thoughtworks</p>
+
+            </div>
+        
+        
+    </div>
+</div>
+
+        
+            <div id="algolia-search-modal" class="modal-container">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="close-button"><i class="fa fa-times"></i></span>
+            <a href="https://algolia.com" target="_blank" rel="noopener" class="searchby-algolia text-color-light link-unstyled">
+                <span class="searchby-algolia-text text-color-light text-small">by</span>
+                <img class="searchby-algolia-logo" src="https://www.algolia.com/static_assets/images/press/downloads/algolia-light.svg">
+            </a>
+            <i class="search-icon fa fa-search"></i>
+            <form id="algolia-search-form">
+                <input type="text" id="algolia-search-input" name="search"
+                    class="form-control input--large search-input" placeholder="Search "
+                    />
+            </form>
+        </div>
+        <div class="modal-body">
+            <div class="no-result text-color-light text-center">没有找到文章</div>
+            <div class="results">
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a class="link-unstyled" href="/2019/04/12/welcome/">
+                            <img class="media-image" src="/2019/04/12/welcome/thumb.jpg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a class="link-unstyled" href="/2019/04/12/welcome/">
+                            <h3 class="media-heading">没有知识的荒原</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    2019年4月12日
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>真的</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a class="link-unstyled" href="/2019/10/09/docker/">
+                            <img class="media-image" src="/2019/10/09/docker/docker.png" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a class="link-unstyled" href="/2019/10/09/docker/">
+                            <h3 class="media-heading">docker 基本概念与命令</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    2019年10月9日
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>docker / docker-compose 相关概念及常用命令</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a class="link-unstyled" href="/2019/10/10/git/">
+                            <img class="media-image" src="/2019/10/10/git/two-branches.png" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a class="link-unstyled" href="/2019/10/10/git/">
+                            <h3 class="media-heading">git常见命令</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    2019年10月10日
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>git基本使用流程：   </p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a class="link-unstyled" href="/2019/10/10/linux/">
+                            <img class="media-image" src="/2019/10/10/linux/file.png" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a class="link-unstyled" href="/2019/10/10/linux/">
+                            <h3 class="media-heading">linux常用命令</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    2019年10月10日
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>man 命令名    #查看命令的详细说明<br>命令名 -help   #查看命令的常用选项</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a class="link-unstyled" href="/2019/11/07/cloudFormation/">
+                            <img class="media-image" src="/2019/11/07/cloudFormation/BA8B245C-410A-4657-B803-48EB29A2EAE8.png" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a class="link-unstyled" href="/2019/11/07/cloudFormation/">
+                            <h3 class="media-heading">CloudFormation</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    2019年11月7日
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><h4 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h4></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a class="link-unstyled" href="/2019/11/12/OAuth2-0/">
+                            <img class="media-image" src="/2019/11/12/OAuth2-0/A07FDDD8-8B95-474B-9C79-6315F52636F1.png" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a class="link-unstyled" href="/2019/11/12/OAuth2-0/">
+                            <h3 class="media-heading">OAuth2.0</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    2019年11月12日
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><h3 id="信任问题"><a href="#信任问题" class="headerlink" title="信任问题"></a>信任问题</h3><p>在OAuth2.0中，简单来说有三方：用户（指属于服务方的用户）、服务方（如微信、微博等）、第三方应用</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+            </div>
+        </div>
+        <div class="modal-footer">
+            <p class="results-count text-medium"
+                data-message-zero="没有找到文章"
+                data-message-one="找到 1 篇文章"
+                data-message-other="找到 {n} 篇文章">
+                找到 6 篇文章
+            </p>
+        </div>
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('/assets/images/cover.jpg');"></div>
+        <!--SCRIPTS-->
+<script src="/assets/js/script-dbd16rvloemmuxdzniplmnxxvwoz24eya9wol0b7vvmlokgqsjivmb8dnscy.min.js"></script>
+<!--SCRIPTS END-->
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.14.1/moment-with-locales.min.js"></script>
+    <script src="//cdn.jsdelivr.net/algoliasearch/3/algoliasearch.min.js"></script>
+    <script>
+        var algoliaClient = algoliasearch('OWQ2XQJ4T9', '3d1a1fe1e9b55c5ae30de44db20886bc');
+        var algoliaIndex = algoliaClient.initIndex('hexoSearch');
+    </script>
+
+
+    </body>
+</html>
