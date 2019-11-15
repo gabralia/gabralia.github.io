@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="/"/>
-  <updated>2019-11-11T16:50:05.814Z</updated>
+  <updated>2019-11-15T09:58:21.344Z</updated>
   <id>/</id>
   
   <author>
@@ -15,6 +15,20 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>bash</title>
+    <link href="/2019/11/15/bash/"/>
+    <id>/2019/11/15/bash/</id>
+    <published>2019-11-15T09:58:21.000Z</published>
+    <updated>2019-11-15T09:58:21.344Z</updated>
+    
+    <summary type="html">
+    
+    </summary>
+    
+    
+  </entry>
   
   <entry>
     <title>OAuth2.0</title>
