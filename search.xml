@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title><![CDATA[bash]]></title>
+    <title><![CDATA[Bash]]></title>
     <url>%2F2019%2F11%2F15%2Fbash%2F</url>
     <content type="text"></content>
+      <tags>
+        <tag>Shell</tag>
+      </tags>
   </entry>
   <entry>
     <title><![CDATA[OAuth2.0]]></title>
