@@ -13,16 +13,19 @@
     
         <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
     
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Jinnew","sameAs":["https://github.com/gabralia","/#about"],"image":"header.jpg"},"articleBody":"","dateCreated":"2019-11-15T17:58:21+08:00","dateModified":"2019-11-15T18:14:10+08:00","datePublished":"2019-11-15T17:58:21+08:00","description":"","headline":"Bash","image":["BA8B245C-410A-4657-B803-48EB29A2EAE8.png","cover.png"],"mainEntityOfPage":{"@type":"WebPage","@id":"/2019/11/15/bash/"},"publisher":{"@type":"Organization","name":"Jinnew","sameAs":["https://github.com/gabralia","/#about"],"image":"header.jpg","logo":{"@type":"ImageObject","url":"header.jpg"}},"url":"/2019/11/15/bash/","keywords":"Shell","thumbnailUrl":"BA8B245C-410A-4657-B803-48EB29A2EAE8.png"}</script>
-    <meta name="keywords" content="Shell">
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Jinnew","sameAs":["https://github.com/gabralia","/#about"],"image":"header.jpg"},"articleBody":"\n#! 告诉系统脚本需要什么解释器来执行，即使用哪一种 Shell。如： #!/bin/sh 和 #!/bin/bash\n\n运行Shell 脚本：./test.sh一定要写成 ./test.sh，而不是 test.sh，运行其它二进制的程序也一样，直接写 test.sh，linux 系统会去 PATH 里寻找有没有叫 test.sh 的，而只有 /bin, /sbin, /usr/bin，/usr/sbin 等在 PATH 里，你的当前目录通常不在 PATH 里，所以写成 test.sh 是会找不到命令的，要用 ./test.sh 告诉系统说，就在当前目录找。\n\n\n\n\n变量","dateCreated":"2019-11-15T17:58:21+08:00","dateModified":"2019-11-15T18:16:09+08:00","datePublished":"2019-11-15T17:58:21+08:00","description":"\n#! 告诉系统脚本需要什么解释器来执行，即使用哪一种 Shell。如： #!/bin/sh 和 #!/bin/bash\n\n运行Shell 脚本：./test.sh一定要写成 ./test.sh，而不是 test.sh，运行其它二进制的程序也一样，直接写 test.sh，linux 系统会去 PATH 里寻找有没有叫 test.sh 的，而只有 /bin, /sbin, /usr/bin，/usr/sbin 等在 PATH 里，你的当前目录通常不在 PATH 里，所以写成 test.sh 是会找不到命令的，要用 ./test.sh 告诉系统说，就在当前目录找。\n\n","headline":"Bash","image":["BA8B245C-410A-4657-B803-48EB29A2EAE8.png","cover.png"],"mainEntityOfPage":{"@type":"WebPage","@id":"/2019/11/15/bash/"},"publisher":{"@type":"Organization","name":"Jinnew","sameAs":["https://github.com/gabralia","/#about"],"image":"header.jpg","logo":{"@type":"ImageObject","url":"header.jpg"}},"url":"/2019/11/15/bash/","keywords":"Shell","thumbnailUrl":"BA8B245C-410A-4657-B803-48EB29A2EAE8.png"}</script>
+    <meta name="description" content="#! 告诉系统脚本需要什么解释器来执行，即使用哪一种 Shell。如： #!/bin/sh 和 #!/bin/bash  运行Shell 脚本：./test.sh一定要写成 ./test.sh，而不是 test.sh，运行其它二进制的程序也一样，直接写 test.sh，linux 系统会去 PATH 里寻找有没有叫 test.sh 的，而只有 /bin, /sbin, /usr/bin，/usr">
+<meta name="keywords" content="Shell">
 <meta property="og:type" content="blog">
 <meta property="og:title" content="Bash">
 <meta property="og:url" content="/2019/11/15/bash/index.html">
 <meta property="og:site_name" content="蜻蜓队长前来觐见">
+<meta property="og:description" content="#! 告诉系统脚本需要什么解释器来执行，即使用哪一种 Shell。如： #!/bin/sh 和 #!/bin/bash  运行Shell 脚本：./test.sh一定要写成 ./test.sh，而不是 test.sh，运行其它二进制的程序也一样，直接写 test.sh，linux 系统会去 PATH 里寻找有没有叫 test.sh 的，而只有 /bin, /sbin, /usr/bin，/usr">
 <meta property="og:locale" content="zh-cn">
-<meta property="og:updated_time" content="2019-11-15T10:14:10.837Z">
+<meta property="og:updated_time" content="2019-11-15T10:16:09.089Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Bash">
+<meta name="twitter:description" content="#! 告诉系统脚本需要什么解释器来执行，即使用哪一种 Shell。如： #!/bin/sh 和 #!/bin/bash  运行Shell 脚本：./test.sh一定要写成 ./test.sh，而不是 test.sh，运行其它二进制的程序也一样，直接写 test.sh，linux 系统会去 PATH 里寻找有没有叫 test.sh 的，而只有 /bin, /sbin, /usr/bin，/usr">
     
     
         
@@ -244,7 +247,15 @@
     
     <div class="post-content markdown">
         <div class="main-content-wrap">
-            
+            <ul>
+<li><p><code>#! 告诉系统脚本需要什么解释器来执行，即使用哪一种 Shell。</code><br>如： #!/bin/sh 和 #!/bin/bash</p>
+</li>
+<li><p>运行Shell 脚本：./test.sh<br>一定要写成 ./test.sh，而不是 test.sh，运行其它二进制的程序也一样，直接写 test.sh，linux 系统会去 PATH 里寻找有没有叫 test.sh 的，而只有 /bin, /sbin, /usr/bin，/usr/sbin 等在 PATH 里，你的当前目录通常不在 PATH 里，所以写成 test.sh 是会找不到命令的，要用 ./test.sh 告诉系统说，就在当前目录找。</p>
+</li>
+</ul>
+<a id="more"></a>
+
+<h4 id="变量"><a href="#变量" class="headerlink" title="变量"></a>变量</h4>
             
 
         </div>
@@ -495,7 +506,12 @@
                                 
                             </span>
                         </span>
-                        <div class="media-content hide-xs font-merryweather"></div>
+                        <div class="media-content hide-xs font-merryweather"><ul>
+<li><p><code>#! 告诉系统脚本需要什么解释器来执行，即使用哪一种 Shell。</code><br>如： #!/bin/sh 和 #!/bin/bash</p>
+</li>
+<li><p>运行Shell 脚本：./test.sh<br>一定要写成 ./test.sh，而不是 test.sh，运行其它二进制的程序也一样，直接写 test.sh，linux 系统会去 PATH 里寻找有没有叫 test.sh 的，而只有 /bin, /sbin, /usr/bin，/usr/sbin 等在 PATH 里，你的当前目录通常不在 PATH 里，所以写成 test.sh 是会找不到命令的，要用 ./test.sh 告诉系统说，就在当前目录找。</p>
+</li>
+</ul></div>
                     </div>
                     <div style="clear:both;"></div>
                     <hr>

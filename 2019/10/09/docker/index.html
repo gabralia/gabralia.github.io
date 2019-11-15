@@ -598,7 +598,12 @@ docker run -it --rm --name busybox2 --network my-net busybox sh （再运行一�
                                 
                             </span>
                         </span>
-                        <div class="media-content hide-xs font-merryweather"></div>
+                        <div class="media-content hide-xs font-merryweather"><ul>
+<li><p><code>#! 告诉系统脚本需要什么解释器来执行，即使用哪一种 Shell。</code><br>如： #!/bin/sh 和 #!/bin/bash</p>
+</li>
+<li><p>运行Shell 脚本：./test.sh<br>一定要写成 ./test.sh，而不是 test.sh，运行其它二进制的程序也一样，直接写 test.sh，linux 系统会去 PATH 里寻找有没有叫 test.sh 的，而只有 /bin, /sbin, /usr/bin，/usr/sbin 等在 PATH 里，你的当前目录通常不在 PATH 里，所以写成 test.sh 是会找不到命令的，要用 ./test.sh 告诉系统说，就在当前目录找。</p>
+</li>
+</ul></div>
                     </div>
                     <div style="clear:both;"></div>
                     <hr>
