@@ -13,7 +13,7 @@
     
         <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
     
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Jinnew","sameAs":["https://github.com/gabralia","/#about"],"image":"header.jpg"},"articleBody":"\n#! 告诉系统脚本需要什么解释器来执行，即使用哪一种 Shell。如： #!/bin/sh 和 #!/bin/bash\n\n运行Shell 脚本：./test.sh一定要写成 ./test.sh，而不是 test.sh，运行其它二进制的程序也一样，直接写 test.sh，linux 系统会去 PATH 里寻找有没有叫 test.sh 的，而只有 /bin, /sbin, /usr/bin，/usr/sbin 等在 PATH 里，你的当前目录通常不在 PATH 里，所以写成 test.sh 是会找不到命令的，要用 ./test.sh 告诉系统说，就在当前目录找。\n\n\n\n\n变量定义变量：your_name=”runoob.com”\n\n变量名和等号之间不能有空格。\n命名只能使用英文字母，数字和下划线，首个字符不能以数字开头。\n中间不能有空格，可以使用下划线（_）。\n不能使用标点符号。\n不能使用bash里的关键字（可用help命令查看保留关键字）\n\n除了显式地直接赋值，还可以用语句给变量赋值，如将 /etc 下目录的文件名循环出来：for file in ls /etcfor file in $(ls /etc)\n使用变量\necho $your_nameecho ${your_name}\n\n使用一个定义过的变量，只要在变量名前面加美元符号即可\n只读变量\nmyUrl=”http://www.google.com&quot;readonly myUrl\n\n删除变量\nunset variable_name\n\n字符串\nstr=’this is a string’\n\n单引号里的任何字符都会原样输出，单引号字符串中的变量是无效的；\n\nyour_name=’runoob’\nstr=”Hello, I know you are &quot;$your_name&quot;! \\n”\n\n双引号里可以有变量双引号里可以出现转义字符\n\nyour_name=”runoob”\ngreeting=”hello, “$your_name” !”\ngreeting_1=”hello, ${your_name} !”\ngreeting_2=’hello, ‘$your_name’ !’\n\n获取字符串长度\nstring=”abcd”\n\n","dateCreated":"2019-11-15T17:58:21+08:00","dateModified":"2019-11-16T01:36:30+08:00","datePublished":"2019-11-15T17:58:21+08:00","description":"\n#! 告诉系统脚本需要什么解释器来执行，即使用哪一种 Shell。如： #!/bin/sh 和 #!/bin/bash\n\n运行Shell 脚本：./test.sh一定要写成 ./test.sh，而不是 test.sh，运行其它二进制的程序也一样，直接写 test.sh，linux 系统会去 PATH 里寻找有没有叫 test.sh 的，而只有 /bin, /sbin, /usr/bin，/usr/sbin 等在 PATH 里，你的当前目录通常不在 PATH 里，所以写成 test.sh 是会找不到命令的，要用 ./test.sh 告诉系统说，就在当前目录找。\n\n","headline":"Bash","image":["BA8B245C-410A-4657-B803-48EB29A2EAE8.png","cover.png"],"mainEntityOfPage":{"@type":"WebPage","@id":"/2019/11/15/bash/"},"publisher":{"@type":"Organization","name":"Jinnew","sameAs":["https://github.com/gabralia","/#about"],"image":"header.jpg","logo":{"@type":"ImageObject","url":"header.jpg"}},"url":"/2019/11/15/bash/","keywords":"Shell","thumbnailUrl":"BA8B245C-410A-4657-B803-48EB29A2EAE8.png"}</script>
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Jinnew","sameAs":["https://github.com/gabralia","/#about"],"image":"header.jpg"},"articleBody":"\n#! 告诉系统脚本需要什么解释器来执行，即使用哪一种 Shell。如： #!/bin/sh 和 #!/bin/bash\n\n运行Shell 脚本：./test.sh一定要写成 ./test.sh，而不是 test.sh，运行其它二进制的程序也一样，直接写 test.sh，linux 系统会去 PATH 里寻找有没有叫 test.sh 的，而只有 /bin, /sbin, /usr/bin，/usr/sbin 等在 PATH 里，你的当前目录通常不在 PATH 里，所以写成 test.sh 是会找不到命令的，要用 ./test.sh 告诉系统说，就在当前目录找。\n\n\n\n\n变量定义变量：your_name=”runoob.com”\n\n变量名和等号之间不能有空格。\n命名只能使用英文字母，数字和下划线，首个字符不能以数字开头。\n中间不能有空格，可以使用下划线（_）。\n不能使用标点符号。\n不能使用bash里的关键字（可用help命令查看保留关键字）\n\n除了显式地直接赋值，还可以用语句给变量赋值，如将 /etc 下目录的文件名循环出来：for file in ls /etcfor file in $(ls /etc)\n使用变量\necho $your_nameecho ${your_name}\n\n使用一个定义过的变量，只要在变量名前面加美元符号即可\n只读变量\nmyUrl=”http://www.google.com&quot;readonly myUrl\n\n删除变量\nunset variable_name\n\n字符串\nstr=’this is a string’\n\n单引号里的任何字符都会原样输出，单引号字符串中的变量是无效的；\n\nyour_name=’runoob’\nstr=”Hello, I know you are &quot;$your_name&quot;! \\n”\n\n双引号里可以有变量双引号里可以出现转义字符\n\nyour_name=”runoob”\ngreeting=”hello, “$your_name” !”\ngreeting_1=”hello, ${your_name} !”\ngreeting_2=’hello, ‘$your_name’ !’\n\n获取字符串长度\nstring=”abcd”\n\n提取子字符串\nstring=”runoob is a great site”\necho ${string:1:4} # 输出 unoo\n\n查找子字符串查找字符 i 或 o 的位置(哪个字母先出现就计算哪个)：\n\nstring=”runoob is a great site”\necho `expr index “$string” io`  # 输出 4\n\n数组定义数组： 数组名=(值1 值2 … 值n)\n\narray_name=(value0 value1 value2 value3)\n\n多行注释：\n123:&lt;&lt;EOFcontent...EOF\n\n123:&lt;&lt;!content...!\n\n参数在执行 Shell 脚本时，向脚本传递参数，脚本内获取参数的格式为：$n。n 代表一个数字，1 为执行脚本的第一个参数，2 为执行脚本的第二个参数，以此类推……\n\n运算符原生bash不支持简单的数学运算，但是可以通过其他命令来实现，例如 awk 和 expr，expr 是一款表达式计算工具，使用它能完成表达式的求值操作。\n\nval=expr 2 + 2echo “两数之和为 : $val”\n\n关系运算符关系运算符只支持数字，不支持字符串，除非字符串的值是数字。\n\n布尔运算符\n逻辑运算符\n字符串运算符\n文件测试运算符\necho\n显示变量#!/bin/shread nameecho “$name It is a test”\n\n\nsh test.shOK                    #标准输入OK It is a test        #输出\n\n\n显示换行echo -e “OK! \\n” # -e 开启转义echo “It is a test”\n\n\nOK! \nIt is a test\n\n\n显示不换行#!/bin/shecho -e “OK! \\c” # -e 开启转义 \\c 不换行echo “It is a test”\n\n\nOK! It is a test\n\n\n显示结果定向至文件echo “It is a test” &gt; myfile\n\ntest 命令Shell中 test 命令用于检查某个条件是否成立，它可以进行数值、字符和文件三个方面的测试。\n数值测试\nnum1=100num2=100if test $[num1] -eq $[num2]\n代码中的 [] 执行基本的算数运算，如：result=$[a+b]\n字符串测试\n\nnum1=”ru1noob”num2=”runoob”if test $num1 = $num2\n\n文件测试\n\nif test -e ./bash\n\n流程控制if\nif else\n\n123456789if conditionthen    command1     command2    ...    commandNelse    commandfi\n\n\nif else-if else\n\n123456789if condition1then    command1elif condition2 then     command2else    commandNfi\n\nfor1234567for var in item1 item2 ... itemNdo    command1    command2    ...    commandNdone\n\nwhile1234while conditiondo    commanddone\n\nuntiluntil 循环执行一系列命令直至条件为 true 时停止。\n1234until conditiondo    commanddone\n\ncase1234567891011121314case 值 in模式1)    command1    command2    ...    commandN    ;;模式2）    command1    command2    ...    commandN    ;;esac    #倒过来的case\n\n取值后面必须为单词in，每一模式必须以右括号结束。取值可以为变量或常数。匹配发现取值符合某一模式后，其间所有命令开始执行直至 ;;。\n取值将检测匹配的每一个模式。一旦模式匹配，则执行完匹配模式相应命令后不再继续其他模式。如果无一匹配模式，使用星号 * 捕获该值，再执行后面的命令。\n\nbreak\ncontine\n\n输入输出重定向\n统计 users 文件的行数,执行以下命令：\n\nwc -l users  \n\n也可以将输入重定向到 users 文件：\n\n wc -l &lt; users\n\n注意：上面两个例子的结果不同：第一个例子，会输出文件名: 2 users；第二个不会, 仅输出：2，因为它仅仅知道从标准输入读取内容。\n\n标准输入文件(stdin)：stdin的文件描述符为0，Unix程序默认从stdin读取数据。\n标准输出文件(stdout)：stdout 的文件描述符为1，Unix程序默认向stdout输出数据。\n标准错误文件(stderr)：stderr的文件描述符为2，Unix程序会向stderr流写入错误信息。\n\n默认情况下，command &gt; file 将 stdout 重定向到 file，command &lt; file 将stdin 重定向到 file。\n如果希望 stderr 重定向到 file，可以这样写：\n\ncommand 2 &gt; file\n\n如果希望 stderr 追加到 file 文件末尾，可以这样写：\n\ncommand 2 &gt;&gt; file\n\n\n表示标准错误文件(stderr)。\n\n如果希望将 stdout 和 stderr 合并后重定向到 file，可以这样写：\n\ncommand &gt; file 2&gt;&amp;1\n\n或者\n\ncommand &gt;&gt; file 2&gt;&amp;1\n\n\n/dev/null 文件\n\n如果希望执行某个命令，但又不希望在屏幕上显示输出结果，那么可以将输出重定向到 /dev/null,写入到它的内容都会被丢弃；如果尝试从该文件读取内容，那么什么也读不到.\n\ncommand &gt; /dev/null\n\n如果希望屏蔽 stdout 和 stderr，可以这样写：\n\ncommand &gt; /dev/null 2&gt;&amp;1\n\n文件包含Shell 也可以包含外部脚本\n\n. filename   #注意点号(.)和文件名中间有一空格\n\n或\n\nsource filename\n\nBash scripting cheatsheetBash scripting cheatsheet\n","dateCreated":"2019-11-15T17:58:21+08:00","dateModified":"2019-11-16T01:39:32+08:00","datePublished":"2019-11-15T17:58:21+08:00","description":"\n#! 告诉系统脚本需要什么解释器来执行，即使用哪一种 Shell。如： #!/bin/sh 和 #!/bin/bash\n\n运行Shell 脚本：./test.sh一定要写成 ./test.sh，而不是 test.sh，运行其它二进制的程序也一样，直接写 test.sh，linux 系统会去 PATH 里寻找有没有叫 test.sh 的，而只有 /bin, /sbin, /usr/bin，/usr/sbin 等在 PATH 里，你的当前目录通常不在 PATH 里，所以写成 test.sh 是会找不到命令的，要用 ./test.sh 告诉系统说，就在当前目录找。\n\n","headline":"Bash","image":["BA8B245C-410A-4657-B803-48EB29A2EAE8.png","cover.png"],"mainEntityOfPage":{"@type":"WebPage","@id":"/2019/11/15/bash/"},"publisher":{"@type":"Organization","name":"Jinnew","sameAs":["https://github.com/gabralia","/#about"],"image":"header.jpg","logo":{"@type":"ImageObject","url":"header.jpg"}},"url":"/2019/11/15/bash/","keywords":"Shell","thumbnailUrl":"BA8B245C-410A-4657-B803-48EB29A2EAE8.png"}</script>
     <meta name="description" content="#! 告诉系统脚本需要什么解释器来执行，即使用哪一种 Shell。如： #!/bin/sh 和 #!/bin/bash  运行Shell 脚本：./test.sh一定要写成 ./test.sh，而不是 test.sh，运行其它二进制的程序也一样，直接写 test.sh，linux 系统会去 PATH 里寻找有没有叫 test.sh 的，而只有 /bin, /sbin, /usr/bin，/usr">
 <meta name="keywords" content="Shell">
 <meta property="og:type" content="blog">
@@ -22,10 +22,21 @@
 <meta property="og:site_name" content="蜻蜓队长前来觐见">
 <meta property="og:description" content="#! 告诉系统脚本需要什么解释器来执行，即使用哪一种 Shell。如： #!/bin/sh 和 #!/bin/bash  运行Shell 脚本：./test.sh一定要写成 ./test.sh，而不是 test.sh，运行其它二进制的程序也一样，直接写 test.sh，linux 系统会去 PATH 里寻找有没有叫 test.sh 的，而只有 /bin, /sbin, /usr/bin，/usr">
 <meta property="og:locale" content="zh-cn">
-<meta property="og:updated_time" content="2019-11-15T17:36:30.723Z">
+<meta property="og:image" content="/2019/11/15/bash/m-2019-11-13-11-46-43.png">
+<meta property="og:image" content="/2019/11/15/bash/m-2019-11-13-11-53-03.png">
+<meta property="og:image" content="/2019/11/15/bash/m-2019-11-13-11-56-01.png">
+<meta property="og:image" content="/2019/11/15/bash/m-2019-11-13-11-58-08.png">
+<meta property="og:image" content="/2019/11/15/bash/m-2019-11-14-12-00-11.png">
+<meta property="og:image" content="/2019/11/15/bash/m-2019-11-14-12-01-56.png">
+<meta property="og:image" content="/2019/11/15/bash/m-2019-11-14-10-53-23.png">
+<meta property="og:image" content="/2019/11/15/bash/m-2019-11-14-10-55-04.png">
+<meta property="og:image" content="/2019/11/15/bash/m-2019-11-14-10-56-44.png">
+<meta property="og:image" content="/2019/11/15/bash/m-2019-11-14-11-15-50.png">
+<meta property="og:updated_time" content="2019-11-15T17:39:32.555Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Bash">
 <meta name="twitter:description" content="#! 告诉系统脚本需要什么解释器来执行，即使用哪一种 Shell。如： #!/bin/sh 和 #!/bin/bash  运行Shell 脚本：./test.sh一定要写成 ./test.sh，而不是 test.sh，运行其它二进制的程序也一样，直接写 test.sh，linux 系统会去 PATH 里寻找有没有叫 test.sh 的，而只有 /bin, /sbin, /usr/bin，/usr">
+<meta name="twitter:image" content="/2019/11/15/bash/m-2019-11-13-11-46-43.png">
     
     
         
@@ -292,6 +303,150 @@
 <h5 id="获取字符串长度"><a href="#获取字符串长度" class="headerlink" title="获取字符串长度"></a>获取字符串长度</h5><blockquote>
 <p>string=”abcd”</p>
 </blockquote>
+<h5 id="提取子字符串"><a href="#提取子字符串" class="headerlink" title="提取子字符串"></a>提取子字符串</h5><blockquote>
+<p>string=”runoob is a great site”</p>
+<p>echo ${string:1:4} # 输出 unoo</p>
+</blockquote>
+<h5 id="查找子字符串"><a href="#查找子字符串" class="headerlink" title="查找子字符串"></a>查找子字符串</h5><p>查找字符 i 或 o 的位置(哪个字母先出现就计算哪个)：</p>
+<blockquote>
+<p>string=”runoob is a great site”</p>
+<p>echo `expr index “$string” io`  # 输出 4</p>
+</blockquote>
+<h4 id="数组"><a href="#数组" class="headerlink" title="数组"></a>数组</h4><p>定义数组： 数组名=(值1 值2 … 值n)</p>
+<blockquote>
+<p>array_name=(value0 value1 value2 value3)</p>
+</blockquote>
+<p>多行注释：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">:&lt;&lt;EOF</span><br><span class="line">content...</span><br><span class="line">EOF</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">:&lt;&lt;!</span><br><span class="line">content...</span><br><span class="line">!</span><br></pre></td></tr></table></figure>
+
+<h4 id="参数"><a href="#参数" class="headerlink" title="参数"></a>参数</h4><p>在执行 Shell 脚本时，向脚本传递参数，脚本内获取参数的格式为：$n。n 代表一个数字，1 为执行脚本的第一个参数，2 为执行脚本的第二个参数，以此类推……</p>
+<p><img src="/2019/11/15/bash/m-2019-11-13-11-46-43.png" alt></p>
+<h4 id="运算符"><a href="#运算符" class="headerlink" title="运算符"></a>运算符</h4><p>原生bash不支持简单的数学运算，但是可以通过其他命令来实现，例如 awk 和 expr，expr 是一款表达式计算工具，使用它能完成表达式的求值操作。</p>
+<blockquote>
+<p>val=<code>expr 2 + 2</code><br>echo “两数之和为 : $val”</p>
+</blockquote>
+<h5 id="关系运算符"><a href="#关系运算符" class="headerlink" title="关系运算符"></a>关系运算符</h5><p>关系运算符只支持数字，不支持字符串，除非字符串的值是数字。</p>
+<p><img src="/2019/11/15/bash/m-2019-11-13-11-53-03.png" alt></p>
+<h5 id="布尔运算符"><a href="#布尔运算符" class="headerlink" title="布尔运算符"></a>布尔运算符</h5><p><img src="/2019/11/15/bash/m-2019-11-13-11-56-01.png" alt></p>
+<h5 id="逻辑运算符"><a href="#逻辑运算符" class="headerlink" title="逻辑运算符"></a>逻辑运算符</h5><p><img src="/2019/11/15/bash/m-2019-11-13-11-58-08.png" alt></p>
+<h5 id="字符串运算符"><a href="#字符串运算符" class="headerlink" title="字符串运算符"></a>字符串运算符</h5><p><img src="/2019/11/15/bash/m-2019-11-14-12-00-11.png" alt></p>
+<h5 id="文件测试运算符"><a href="#文件测试运算符" class="headerlink" title="文件测试运算符"></a>文件测试运算符</h5><p><img src="/2019/11/15/bash/m-2019-11-14-12-01-56.png" alt></p>
+<h4 id="echo"><a href="#echo" class="headerlink" title="echo"></a>echo</h4><ul>
+<li>显示变量<br>#!/bin/sh<br>read name<br>echo “$name It is a test”</li>
+</ul>
+<blockquote>
+<p>sh test.sh<br>OK                    #标准输入<br>OK It is a test        #输出</p>
+</blockquote>
+<ul>
+<li>显示换行<br>echo -e “OK! \n” # -e 开启转义<br>echo “It is a test”</li>
+</ul>
+<blockquote>
+<p>OK! </p>
+<p>It is a test</p>
+</blockquote>
+<ul>
+<li>显示不换行<br>#!/bin/sh<br>echo -e “OK! \c” # -e 开启转义 \c 不换行<br>echo “It is a test”</li>
+</ul>
+<blockquote>
+<p>OK! It is a test</p>
+</blockquote>
+<ul>
+<li>显示结果定向至文件<br>echo “It is a test” &gt; myfile</li>
+</ul>
+<h4 id="test-命令"><a href="#test-命令" class="headerlink" title="test 命令"></a>test 命令</h4><p>Shell中 test 命令用于检查某个条件是否成立，它可以进行数值、字符和文件三个方面的测试。</p>
+<h5 id="数值测试"><a href="#数值测试" class="headerlink" title="数值测试"></a>数值测试</h5><p><img src="/2019/11/15/bash/m-2019-11-14-10-53-23.png" alt></p>
+<p>num1=100<br>num2=100<br>if test $[num1] -eq $[num2]</p>
+<p>代码中的 [] 执行基本的算数运算，如：<br>result=$[a+b]</p>
+<h5 id="字符串测试"><a href="#字符串测试" class="headerlink" title="字符串测试"></a>字符串测试</h5><p><img src="/2019/11/15/bash/m-2019-11-14-10-55-04.png" alt></p>
+<blockquote>
+<p>num1=”ru1noob”<br>num2=”runoob”<br>if test $num1 = $num2</p>
+</blockquote>
+<h5 id="文件测试"><a href="#文件测试" class="headerlink" title="文件测试"></a>文件测试</h5><p><img src="/2019/11/15/bash/m-2019-11-14-10-56-44.png" alt></p>
+<blockquote>
+<p>if test -e ./bash</p>
+</blockquote>
+<h4 id="流程控制"><a href="#流程控制" class="headerlink" title="流程控制"></a>流程控制</h4><h5 id="if"><a href="#if" class="headerlink" title="if"></a>if</h5><ul>
+<li>if else</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> condition</span><br><span class="line"><span class="keyword">then</span></span><br><span class="line">    command1 </span><br><span class="line">    command2</span><br><span class="line">    ...</span><br><span class="line">    commandN</span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">    <span class="built_in">command</span></span><br><span class="line"><span class="keyword">fi</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>if else-if else</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> condition1</span><br><span class="line"><span class="keyword">then</span></span><br><span class="line">    command1</span><br><span class="line"><span class="keyword">elif</span> condition2 </span><br><span class="line"><span class="keyword">then</span> </span><br><span class="line">    command2</span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">    commandN</span><br><span class="line"><span class="keyword">fi</span></span><br></pre></td></tr></table></figure>
+
+<h5 id="for"><a href="#for" class="headerlink" title="for"></a>for</h5><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> var <span class="keyword">in</span> item1 item2 ... itemN</span><br><span class="line"><span class="keyword">do</span></span><br><span class="line">    command1</span><br><span class="line">    command2</span><br><span class="line">    ...</span><br><span class="line">    commandN</span><br><span class="line"><span class="keyword">done</span></span><br></pre></td></tr></table></figure>
+
+<h5 id="while"><a href="#while" class="headerlink" title="while"></a>while</h5><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span> condition</span><br><span class="line"><span class="keyword">do</span></span><br><span class="line">    <span class="built_in">command</span></span><br><span class="line"><span class="keyword">done</span></span><br></pre></td></tr></table></figure>
+
+<h5 id="until"><a href="#until" class="headerlink" title="until"></a>until</h5><p>until 循环执行一系列命令直至条件为 true 时停止。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">until condition</span><br><span class="line"><span class="keyword">do</span></span><br><span class="line">    <span class="built_in">command</span></span><br><span class="line"><span class="keyword">done</span></span><br></pre></td></tr></table></figure>
+
+<h5 id="case"><a href="#case" class="headerlink" title="case"></a>case</h5><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">case</span> 值 <span class="keyword">in</span></span><br><span class="line">模式1)</span><br><span class="line">    command1</span><br><span class="line">    command2</span><br><span class="line">    ...</span><br><span class="line">    commandN</span><br><span class="line">    ;;</span><br><span class="line">模式2）</span><br><span class="line">    command1</span><br><span class="line">    command2</span><br><span class="line">    ...</span><br><span class="line">    commandN</span><br><span class="line">    ;;</span><br><span class="line"><span class="keyword">esac</span>    <span class="comment">#倒过来的case</span></span><br></pre></td></tr></table></figure>
+
+<p>取值后面必须为单词in，每一模式必须以右括号结束。取值可以为变量或常数。匹配发现取值符合某一模式后，其间所有命令开始执行直至 ;;。</p>
+<p>取值将检测匹配的每一个模式。一旦模式匹配，则执行完匹配模式相应命令后不再继续其他模式。如果无一匹配模式，使用星号 * 捕获该值，再执行后面的命令。</p>
+<ul>
+<li>break</li>
+<li>contine</li>
+</ul>
+<h4 id="输入输出重定向"><a href="#输入输出重定向" class="headerlink" title="输入输出重定向"></a>输入输出重定向</h4><p><img src="/2019/11/15/bash/m-2019-11-14-11-15-50.png" alt></p>
+<p>统计 users 文件的行数,执行以下命令：</p>
+<blockquote>
+<p>wc -l users  </p>
+</blockquote>
+<p>也可以将输入重定向到 users 文件：</p>
+<blockquote>
+<p> wc -l &lt; users</p>
+</blockquote>
+<p>注意：上面两个例子的结果不同：第一个例子，会输出文件名: 2 users；第二个不会, 仅输出：2，因为它仅仅知道从标准输入读取内容。</p>
+<ul>
+<li>标准输入文件(stdin)：stdin的文件描述符为0，Unix程序默认从stdin读取数据。</li>
+<li>标准输出文件(stdout)：stdout 的文件描述符为1，Unix程序默认向stdout输出数据。</li>
+<li>标准错误文件(stderr)：stderr的文件描述符为2，Unix程序会向stderr流写入错误信息。</li>
+</ul>
+<p>默认情况下，command &gt; file 将 stdout 重定向到 file，command &lt; file 将stdin 重定向到 file。</p>
+<p>如果希望 stderr 重定向到 file，可以这样写：</p>
+<blockquote>
+<p>command 2 &gt; file</p>
+</blockquote>
+<p>如果希望 stderr 追加到 file 文件末尾，可以这样写：</p>
+<blockquote>
+<p>command 2 &gt;&gt; file</p>
+</blockquote>
+<ul>
+<li>表示标准错误文件(stderr)。</li>
+</ul>
+<p>如果希望将 stdout 和 stderr 合并后重定向到 file，可以这样写：</p>
+<blockquote>
+<p>command &gt; file 2&gt;&amp;1</p>
+</blockquote>
+<p>或者</p>
+<blockquote>
+<p>command &gt;&gt; file 2&gt;&amp;1</p>
+</blockquote>
+<ul>
+<li>/dev/null 文件</li>
+</ul>
+<p>如果希望执行某个命令，但又不希望在屏幕上显示输出结果，那么可以将输出重定向到 /dev/null,写入到它的内容都会被丢弃；如果尝试从该文件读取内容，那么什么也读不到.</p>
+<blockquote>
+<p>command &gt; /dev/null</p>
+</blockquote>
+<p>如果希望屏蔽 stdout 和 stderr，可以这样写：</p>
+<blockquote>
+<p>command &gt; /dev/null 2&gt;&amp;1</p>
+</blockquote>
+<h4 id="文件包含"><a href="#文件包含" class="headerlink" title="文件包含"></a>文件包含</h4><p>Shell 也可以包含外部脚本</p>
+<blockquote>
+<p>. filename   #注意点号(.)和文件名中间有一空格</p>
+</blockquote>
+<p>或</p>
+<blockquote>
+<p>source filename</p>
+</blockquote>
+<h4 id="Bash-scripting-cheatsheet"><a href="#Bash-scripting-cheatsheet" class="headerlink" title="Bash scripting cheatsheet"></a>Bash scripting cheatsheet</h4><p><a href="https://devhints.io/bash" target="_blank" rel="noopener">Bash scripting cheatsheet</a></p>
 
             
 
